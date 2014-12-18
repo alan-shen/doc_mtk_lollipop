@@ -70,53 +70,78 @@ drivers/misc/mediatek/mach/mt6795/k6795v1_64_op01_pre/hallsensor/hall_sensor/Mak
 driver::hwmon
 +++++++++++++
 
-drivers/misc/mediatek/hwmon/hwmsen/hwmsen_dev.c
-drivers/misc/mediatek/hwmon/hwmsen/hwmsen_helper.c
+drivers/misc/mediatek/hwmon/hwmsen/hwmsen_dev.c                   |   通用 sensor driver 接口?? ("hwmsensor"的 driver); Probe 时注册 input 设备
+drivers/misc/mediatek/hwmon/hwmsen/hwmsen_helper.c                |
+                                                                  |
+                                                                  |   hwmsen_get_convert()        根据 direction 获取转换表
+                                                                  |   hwmsen_attach(sensor,obj)   将 obj 注册到 mcxt->cxt[sensor]->obj    <<<<< !!!!!!!!!!!!!!!!!!!!
+                                                                  |   hwmsen_detach(sensor)
+                                                                  |
+                                                                  |   struct hwmsen_object {
+                                                                  |       void *self;
+                                                                  |       int polling;
+                                                                  |       int (*sensor_operate)(void* self, uint32_t command, void* buff_in, int size_in,
+                                                                  |           void* buff_out, int size_out, int* actualout);
+                                                                  |   };  
+                                                                  |
+                                                                  |   int gsensor_operate(void* self, uint32_t command, void* buff_in, int size_in,
+                                                                  |           void* buff_out, int size_out, int* actualout)
+                                                                  |
+                                                                  |   CMD_1 - SENSOR_DELAY
+                                                                  |   CMD_2 - SENSOR_ENABLE
+                                                                  |   CMD_3 - SENSOR_GET_DATA
+==================================================================================================
+driver::alsps(gesture)
+++++++++++++++++++++++
 
-=================================================================================
-driver::alsps
-+++++++++++++
+drivers/misc/mediatek/alsps/alsps.c                               |   设备 "m_alsps_pl" 的 driver
+drivers/misc/mediatek/alsps/aal_control.c                         |   由于没有驱动调用 alsps_driver_add() 注册驱动到变量 alsps_init_list[] 中,
+drivers/misc/mediatek/alsps/alsps_factory.c                       |   所以在 alsps_probe() 时会失败!!Probe 成功的话会注册 input 设备
+----------------------------------------------------------------------------------------------
+drivers/misc/mediatek/alsps/tmg399x/cust_alsps.c                  |
+drivers/misc/mediatek/alsps/tmg399x/tmg399x.c                     |   设备 "als_ps" 的 driver
+drivers/misc/mediatek/alsps/tmg399x/tmg399x_gesture_algorithm.c   |
 
-drivers/misc/mediatek/alsps/alsps.c
-drivers/misc/mediatek/alsps/aal_control.c
-drivers/misc/mediatek/alsps/alsps_factory.c
-drivers/misc/mediatek/alsps/tmg399x/cust_alsps.c
-drivers/misc/mediatek/alsps/tmg399x/tmg399x.c
-drivers/misc/mediatek/alsps/tmg399x/tmg399x_gesture_algorithm.c
-
-=================================================================================
+==================================================================================================
 driver::accelerometer
 +++++++++++++++++++++
 
-drivers/misc/mediatek/accelerometer/accel.c
-drivers/misc/mediatek/accelerometer/accel_factory.c
-drivers/misc/mediatek/accelerometer/lsm6ds0_acc/cust_acc.c
-drivers/misc/mediatek/accelerometer/lsm6ds0_acc/lsm6ds0_acc.c
+drivers/misc/mediatek/accelerometer/accel.c                       |   设备 "m_acc_pl" 的 driver
+drivers/misc/mediatek/accelerometer/accel_factory.c               |   由于没有驱动调用 acc_driver_add() 注册驱动到变量 gsensor_init_list[] 中,
+                                                                  |   所以在 acc_probe() 时会失败!!Probe 成功的话会注册 input 设备
+----------------------------------------------------------------------------------------------
+drivers/misc/mediatek/accelerometer/lsm6ds0_acc/cust_acc.c        |   平台相关信息,i2c bus/power等!
+drivers/misc/mediatek/accelerometer/lsm6ds0_acc/lsm6ds0_acc.c     |   设备"gsensor"的 driver; 在 init 中调用 i2c_register_board_info() 设置设备
+                                                                  |   端口信息,注册i2c设备, board_info(i2c-addr) 在驱动中, 汗颜!!!
 
-=================================================================================
+==================================================================================================
 driver::gyroscope
 +++++++++++++++++
 
-drivers/misc/mediatek/gyroscope/gyroscope.c
-drivers/misc/mediatek/gyroscope/gyro_factory.c
-drivers/misc/mediatek/gyroscope/lsm6ds0/cust_gyro.c
-drivers/misc/mediatek/gyroscope/lsm6ds0/lsm6ds0.c
+drivers/misc/mediatek/gyroscope/gyroscope.c                       |   设备 "m_gyro_pl" 的 driver
+drivers/misc/mediatek/gyroscope/gyro_factory.c                    |   由于没有驱动调用 gyro_driver_add() 注册驱动到变量 gyroscope_init_list[] 中,
+                                                                  |   所以在 gyro_probe() 时会失败!!Probe 成功的话会注册 input 设备
+----------------------------------------------------------------------------------------------
+drivers/misc/mediatek/gyroscope/lsm6ds0/cust_gyro.c               |
+drivers/misc/mediatek/gyroscope/lsm6ds0/lsm6ds0.c                 |   设备 "gyroscope" 的 driver
 
-=================================================================================
+==================================================================================================
 driver::magnetometer
 ++++++++++++++++++++
 
-drivers/misc/mediatek/magnetometer/mag.c
-drivers/misc/mediatek/magnetometer/mag_factory.c
-drivers/misc/mediatek/magnetometer/mmc3524x/cust_mag.c
-drivers/misc/mediatek/magnetometer/mmc3524x/mmc3524x.c
+drivers/misc/mediatek/magnetometer/mag.c                          |   设备 "m_mag_pl" 的 driver
+drivers/misc/mediatek/magnetometer/mag_factory.c                  |   由于没有驱动调用 mag_driver_add() 注册驱动到变量 msensor_init_list[] 中,
+                                                                  |   所以在 mag_probe() 时会失败!!Probe 成功的话会注册 input 设备
+----------------------------------------------------------------------------------------------
+drivers/misc/mediatek/magnetometer/mmc3524x/cust_mag.c            |
+drivers/misc/mediatek/magnetometer/mmc3524x/mmc3524x.c            |   设备 "msensor" 的 driver; 数据有 daemon 程序保存的!!!
 
-=================================================================================
+==================================================================================================
 driver::hall
 ++++++++++++
 
-drivers/misc/mediatek/mach/mt6795/k6795v1_64/hallsensor/hall_sensor/hall_sensro.c
-drivers/misc/mediatek/mach/mt6795/k6795v1_64_op01_pre/hallsensor/hall_sensor/hall_sensro.c
+drivers/misc/mediatek/mach/mt6795/k6795v1_64/hallsensor/hall_sensor/hall_sensro.c             |   设备 "hall_gpio" 的 driver
+drivers/misc/mediatek/mach/mt6795/k6795v1_64_op01_pre/hallsensor/hall_sensor/hall_sensro.c    |
 
 ========================================================================================================(设备注册)<<<<<<<(device tree source)
 arch/arm64/boot/dts/mt6795.dtsi
@@ -124,7 +149,7 @@ arch/arm64/boot/dts/mt6795.dtsi
 
 /* sensor part */
 hwmsensor@0 {
-	compatible = "mediatek,hwmsensor";
+	compatible = "mediatek,hwmsensor";            || 要与 driver 中同名词条匹配;(CONFIG_OF)
 };
 m_acc_pl@0 {
 	compatible = "mediatek,m_acc_pl";
@@ -161,44 +186,6 @@ hall_gpio@0 {
 
 =================================================================================
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ========================================================================================================(设备注册)<<<<<(有了dtsi这个还用吗?)
 drivers/misc/mediatek/mach/mt6795/board.c
 +++++++++++++++++++++++++++++++++++++++++
@@ -212,4 +199,98 @@ drivers/misc/mediatek/mach/mt6795/board.c
 		{}
 
 drivers/misc/mediatek/mach/mt6795/mt_devs.c        <<<< 这个文件就没有被编译~
+========================================================================================================
+
+
+
+
+========================================================================================================
+HAL Layer:
+++++++++++
+
+ ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ mediatek/hardware/sensor/sensors.c             |
+ mediatek/hardware/sensor/SensorBase.cpp        |
+ mediatek/hardware/sensor/Hwmsen.cpp            |   <<<<<<<  读取 hwmsensor 设备节点的文件!!!!  以及操作的接口(ioctl)
+ mediatek/hardware/sensor/hwmsen_chip_info.c    |   <<<<<<<  定义了板子上所有 sensor 列表!!              "sSensorList"
+                                                |---------------------------------------------------------------------
+                                                |
+                                                |   struct sensors_poll_device_t {
+                                                |       struct hw_device_t common;
+                                                |       int (*activate)(struct sensors_poll_device_t *dev, int handle, int enabled);
+                                                |       int (*setDelay)(struct sensors_poll_device_t *dev, int handle, int64_t ns);
+                                                |       int     (*poll)(struct sensors_poll_device_t *dev, sensors_event_t* data, int count);
+                                                |   };
+                                                |
+                                                |   /* 包含 Sensor 操作方法的结构体 */
+                                                |   struct sensors_data_context_t {
+                                                |       struct sensors_poll_device_t device;
+                                                |       int events_fd;
+                                                |       int device_io_fd;
+                                                |       uint32_t active_sensors;
+                                                |       sensors_event_t sensors[MAX_ANDROID_SENSOR_NUM];
+                                                |       uint32_t pendingSensors;
+                                                |       int  (*activate)(struct sensors_data_context_t *dev,int handle, int enabled);
+                                                |       int (*set_delay)(struct sensors_data_context_t *dev, int handle, int64_t ns);
+                                                |       int      (*poll)(struct sensors_data_context_t *dev, sensors_event_t* values, int count);
+                                                |   };
+                                                |
+                                                |---------------------------------------------------------------------
+                                                |
+                                                |static int open_sensors(const struct hw_module_t* module, const char* name, struct hw_device_t** device)
+                                                |{
+                                                |   ... ...
+                                                |   struct sensors_data_context_t *dev;
+                                                |   ... ...                                                          /****** 通过 sensor_operate 来操作 hwmsensor *****/
+                                                |   ... ...                                                 +--------HWM_IO_ENABLE_SENSOR_NODATA/HWM_IO_DISABLE_SENSOR_NODATA
+                                                |   dev->activate =  hwm__activate;         <------------------------HWM_IO_ENABLE_SENSOR/HWM_IO_DISABLE_SENSOR
+                                                |   dev->set_delay = hwm__set_delay;        <------------------------HWM_IO_SET_DELAY
+                                                |   dev->poll = hwm__poll;          <--------------------------------HWM_IO_GET_SENSORS_DATA
+                                                |   ... ...                                                          /****** 通过 sensor_operate 来操作 hwmsensor *****/
+                                                |
+                                                |   dev->device.common.tag = HARDWARE_DEVICE_TAG;
+                                                |   dev->device.common.version  = 0;
+                                                |   dev->device.common.module   = (struct hw_module_t*)module;
+                                                |   dev->device.common.close    = data__close;
+                                                |   dev->device.activate        = control__activate;   <-------------
+                                                |   dev->device.setDelay        = control__setDelay;   <-------------
+                                                |   dev->device.poll            = data__poll;   <--------------------
+                                                |   ... ...
+                                                |}
+                                                |
+                                                |--------------------------------------------------------------------
+                                                |
+                                                |   static struct hw_module_methods_t sensors_module_methods = {
+                                                |       .open = open_sensors
+                                                |   };
+                                                |
+                                                |   /* 注册到 HAL 层必须的结构体 */
+                                                |   struct sensors_module_t HAL_MODULE_INFO_SYM = {
+                                                |       .common = {
+                                                |           .tag           = HARDWARE_MODULE_TAG,
+                                                |           .version_major = 1,
+                                                |           .version_minor = 0,
+                                                |           .id            = SENSORS_HARDWARE_MODULE_ID,
+                                                |           .name          = "MTK SENSORS Module",
+                                                |           .author        = "The Android Open Source Project",
+                                                |           .methods       = &sensors_module_methods,
+                                                |       },
+                                                |       .get_sensors_list = sensors__get_sensors_list,      <----------可以获取板子上支持的sensor列表 "sSensorList"
+                                                |   };
+                                                |
+                                                |---------------------------------------------------------------------
+ mediatek/hardware/sensor/nusensors.cpp         |
+ mediatek/hardware/sensor/sensordebug.cpp       |
+ mediatek/hardware/sensor/InputEventReader.cpp  |
+ ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ mediatek/hardware/sensor/Acceleration.cpp      |
+ mediatek/hardware/sensor/Magnetic.cpp          |
+ mediatek/hardware/sensor/Gyroscope.cpp         |
+ mediatek/hardware/sensor/AmbienteLight.cpp     |
+ mediatek/hardware/sensor/Proximity.cpp         |
+ mediatek/hardware/sensor/Pressure.cpp          |
+ mediatek/hardware/sensor/Temprature.cpp        |
+ mediatek/hardware/sensor/BatchSensor.cpp       |
+ ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 ========================================================================================================
