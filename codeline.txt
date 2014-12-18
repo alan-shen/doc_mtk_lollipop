@@ -1,0 +1,64 @@
+=================================================================================================================================================================
+http://wiki.letv.cn/pages/viewpage.action?pageId=27893857
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+移动平台产品线
+
+8084-Denali:
+
+	repo init -u minervar:denali/platform/manifest.git -b denali --repo-url=minervar:tools/repo.git --no-repo-verify
+
+apq8084-la-1-0-c2_amss_oem:
+
+	git clone dianar:msm8994/private/apq8084-la-1-0-c2_amss_oem.git -b denali
+
+MSM8994-Max1:
+
+	repo init -u dianar:msm8994/platform/manifest.git -b evt1-dev -m letv/EVT1-DEV.xml --repo-url=dianar:tools/repo.git --repo-branch=caf-stable
+
+msm8994-la-1-0_amss_oem_no-l1-src:
+
+	git clone dianar:/msm8994/private/msm8994-la-1-0_amss_oem_no-l1-src-LYD1016012.git –b evt1-dev
+	
+		$ scp athenar:hooks/commit-msg .git/hooks/
+		$ curl -Lo .git/hooks/commit-msg http://athena/gerrit/tools/hooks/commit-msg
+
+CEI(MTK)
+
+	[pre2]       repo init -u dianar:mtk_pre2/manifests.git -b alucard_s1_single_pre2 -m letv/ALUCARD_S1_SINGLE_PRE2.xml --repo-url=dianar:tools/repo.git --repo-branch=caf-stable
+	[sumo]       repo init -u dianar:mtk6595/manifests.git  -b alucard_evt3           -m ALUCARD_EVT3.xml                --repo-url=dianar:tools/repo.git --repo-branch=caf-stable
+	[MP][base]   repo init -u dianar:mtk_MP/manifests.git   -b LL95_MP                                                   --repo-url=dianar:tools/repo.git
+	[MP][dsds]   repo init -u dianar:mtk_MP/manifests.git   -b alucard_s1_dsds                                           --repo-url=dianar:tools/repo.git
+
+Leui
+
+	repo init -u dianar:leui/platform/manifest -b leui --repo-url=dianar:tools/repo.git
+
+android L preview
+
+	repo init -u dianar:android/platform/manifest.git -p all -b l-preview --repo-url=dianar:tools/repo.git --no-repo-verify
+
+=================================================================================================================================================================
+<ANDROID L 正式版>
+++++++++++++++++++
+
+QCOM_MAX1:
+
+    repo init -u dianar:msm8994/platform/manifest.git -b letv_master -m letv/MAX1_DEV_BSP.xml        --repo-url=dianar:tools/repo.git
+
+MTK_S1_CEI:
+
+    repo init -u dianar:mtk_pre_smt2/manifests.git    -b letv_master -m letv/ALUCARD_S1_PRE_CEI.xml  --repo-url=dianar:tools/repo.git
+                                                                                            ^
+
+MTK_S1_CEI(CTA Release):
+
+	repo init -u dianar:mtk_pre_cta/manifests.git     -b letv_master -m letv/ALUCARD_S1_PRE_CEI.xml  --repo-url=dianar:tools/repo.git
+                                ^
+
+MTK_S1_LEUI:
+
+    repo init -u dianar:mtk_pre_smt2/manifests.git    -b letv_master -m letv/ALUCARD_S1_PRE_LEUI.xml --repo-url=dianar:tools/repo.git
+                                                                                            ^
+
+=================================================================================================================================================================
