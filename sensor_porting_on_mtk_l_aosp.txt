@@ -1,0 +1,215 @@
+========================================================================================================
+======     ANDROID LOLLIPOP ============================================================================
+========================================================================================================(menuconfig/makefile)<<<<<
+Kernel Menuconfig:
+++++++++++++++++++
+
+Devices Drivers -> Misc Devices -> Mediatek Properitary Configuration
+
+[*]   MTK_SENSOR_SUPPORT          || CONFIG_MTK_SENSOR_SUPPORT           || =y
+[*]   CONFIG_MTK_HWMON            || CONFIG_MTK_HWMON                    || =y
+[*]   CUSTOM_KERNEL_ACCELEROMETER || CONFIG_CUSTOM_KERNEL_ACCELEROMETER  || =y
+[*]   CUSTOM_KERNEL_GYROSCOPE     || CONFIG_CUSTOM_KERNEL_GYROSCOPE      || =y
+[*]   CUSTOM_KERNEL_ALSPS         || CONFIG_CUSTOM_KERNEL_ALSPS          || =y
+[*]   CUSTOM_KERNEL_MAGNETOMETER  || CONFIG_CUSTOM_KERNEL_MAGNETOMETER   || =y
+[*]   CUSTOM_KERNEL_BAROMETER     || CONFIG_CUSTOM_KERNEL_BAROMETER      || =y
+
+      Drivers Configurations  ---> || 配置具体使用哪个驱动?但是CEI直接在Makefile写死,没有写Kconfig配置!!狗屎
+                                   || "Hall" sensor 放在另一个位置,并且也是直接"obj-y"包含的.
+
+[ ]   MTK_SENSOR_HUB_SUPPORT      || CONFIG_MTK_SENSOR_HUB_SUPPORT       || =n
+()    CUSTOM_KERNEL_SENSORHUB     || CONFIG_CUSTOM_KERNEL_SENSORHUB      || =""
+()    CUSTOM_KERNEL_STEP_COUNTER
+()    CUSTOM_KERNEL_SIGNIFICANT_MOTION_SENSOR
+()    CUSTOM_KERNEL_ACTIVITY_SENSOR
+()    CUSTOM_KERNEL_PICK_UP_SENSOR
+()    CUSTOM_KERNEL_SHAKE_SENSOR
+()    CUSTOM_KERNEL_FACE_DOWN_SENSOR
+()    CUSTOM_KERNEL_IN_POCKET_SENSOR
+()    CUSTOM_KERNEL_PEDOMETER
+()    CUSTOM_KERNEL_HEART_RATE_SENSOR
+()    CUSTOM_KERNEL_TILT_DETECTOR_SENSOR
+()    CUSTOM_KERNEL_WAKE_GESTURE_SENSOR
+()    CUSTOM_KERNEL_GLANCE_GESTURE_SENSOR
+
+=======================================================================================
+drivers/misc/mediatek/Makefile:
++++++++++++++++++++++++++++++++
+
+ifeq ($(CONFIG_MTK_SENSOR_SUPPORT),y)
+	obj-$(CONFIG_MTK_HWMON)                     += hwmon/
+	obj-$(CONFIG_CUSTOM_KERNEL_ALSPS)           += alsps/
+	obj-$(CONFIG_CUSTOM_KERNEL_ACCELEROMETER)   += accelerometer/
+	obj-$(CONFIG_CUSTOM_KERNEL_GYROSCOPE)       += gyroscope/
+	obj-$(CONFIG_CUSTOM_KERNEL_MAGNETOMETER)    += magnetometer/
+	obj-$(CONFIG_CUSTOM_KERNEL_BAROMETER)       += barometer/
+
+	ifneq ($(CONFIG_CUSTOM_KERNEL_SENSORHUB),"")
+		obj-y   += sensorHub/
+		ifneq ($(CONFIG_CUSTOM_KERNEL_STEP_COUNTER),"")
+			obj-y   += step_counter/
+		endif
+		...
+		...
+	endif
+endif
+
+=======================================================================================
+drivers/misc/mediatek/mach/mt6795/k6795v1_64/hallsensor/hall_sensor/Makefile:
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	obj-y   +=  hallsensor/hall_sensor/
+
+=======================================================================================
+drivers/misc/mediatek/mach/mt6795/k6795v1_64_op01_pre/hallsensor/hall_sensor/Makefile:
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	obj-y   +=  hallsensor/hall_sensor/
+
+========================================================================================================(驱动)<<<<<
+driver::hwmon
++++++++++++++
+
+drivers/misc/mediatek/hwmon/hwmsen/hwmsen_dev.c
+drivers/misc/mediatek/hwmon/hwmsen/hwmsen_helper.c
+
+=================================================================================
+driver::alsps
++++++++++++++
+
+drivers/misc/mediatek/alsps/alsps.c
+drivers/misc/mediatek/alsps/aal_control.c
+drivers/misc/mediatek/alsps/alsps_factory.c
+drivers/misc/mediatek/alsps/tmg399x/cust_alsps.c
+drivers/misc/mediatek/alsps/tmg399x/tmg399x.c
+drivers/misc/mediatek/alsps/tmg399x/tmg399x_gesture_algorithm.c
+
+=================================================================================
+driver::accelerometer
++++++++++++++++++++++
+
+drivers/misc/mediatek/accelerometer/accel.c
+drivers/misc/mediatek/accelerometer/accel_factory.c
+drivers/misc/mediatek/accelerometer/lsm6ds0_acc/cust_acc.c
+drivers/misc/mediatek/accelerometer/lsm6ds0_acc/lsm6ds0_acc.c
+
+=================================================================================
+driver::gyroscope
++++++++++++++++++
+
+drivers/misc/mediatek/gyroscope/gyroscope.c
+drivers/misc/mediatek/gyroscope/gyro_factory.c
+drivers/misc/mediatek/gyroscope/lsm6ds0/cust_gyro.c
+drivers/misc/mediatek/gyroscope/lsm6ds0/lsm6ds0.c
+
+=================================================================================
+driver::magnetometer
+++++++++++++++++++++
+
+drivers/misc/mediatek/magnetometer/mag.c
+drivers/misc/mediatek/magnetometer/mag_factory.c
+drivers/misc/mediatek/magnetometer/mmc3524x/cust_mag.c
+drivers/misc/mediatek/magnetometer/mmc3524x/mmc3524x.c
+
+=================================================================================
+driver::hall
+++++++++++++
+
+drivers/misc/mediatek/mach/mt6795/k6795v1_64/hallsensor/hall_sensor/hall_sensro.c
+drivers/misc/mediatek/mach/mt6795/k6795v1_64_op01_pre/hallsensor/hall_sensor/hall_sensro.c
+
+========================================================================================================(设备注册)<<<<<<<(device tree source)
+arch/arm64/boot/dts/mt6795.dtsi
++++++++++++++++++++++++++++++++
+
+/* sensor part */
+hwmsensor@0 {
+	compatible = "mediatek,hwmsensor";
+};
+m_acc_pl@0 {
+	compatible = "mediatek,m_acc_pl";
+};
+m_gyro_pl@0 {
+	compatible = "mediatek,m_gyro_pl";
+};
+m_mag_pl@0 {
+	compatible = "mediatek,m_mag_pl";
+};
+m_alsps_pl@0 {
+	compatible = "mediatek,m_alsps_pl";
+};
+
+gsensor@0 {
+	compatible = "mediatek,gsensor";
+};
+gyroscope@0 {
+	compatible = "mediatek,gyroscope";
+};
+als_ps@0 {
+	compatible = "mediatek,als_ps";
+};
+msensor@0 {
+	compatible = "mediatek,msensor";
+};
+orientation@0 {
+	compatible = "mediatek,orientation";
+};   
+hall_gpio@0 {
+	compatible = "mediatek,hall_gpio";
+};
+/* sensor end */
+
+=================================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+========================================================================================================(设备注册)<<<<<(有了dtsi这个还用吗?)
+drivers/misc/mediatek/mach/mt6795/board.c
++++++++++++++++++++++++++++++++++++++++++
+
+	late_initcall(board_init);
+	static __init int board_init(void)
+	{}
+
+		mt_board_init();
+		__init int mt_board_init(void)
+		{}
+
+drivers/misc/mediatek/mach/mt6795/mt_devs.c        <<<< 这个文件就没有被编译~
+========================================================================================================
