@@ -66,6 +66,11 @@ drivers/misc/mediatek/mach/mt6795/k6795v1_64_op01_pre/hallsensor/hall_sensor/Mak
 
 	obj-y   +=  hallsensor/hall_sensor/
 
+========================================================================================================
+
+
+
+
 ========================================================================================================(驱动)<<<<<
 driver::hwmon
 +++++++++++++
@@ -143,6 +148,11 @@ driver::hall
 drivers/misc/mediatek/mach/mt6795/k6795v1_64/hallsensor/hall_sensor/hall_sensro.c             |   设备 "hall_gpio" 的 driver
 drivers/misc/mediatek/mach/mt6795/k6795v1_64_op01_pre/hallsensor/hall_sensor/hall_sensro.c    |
 
+==================================================================================================
+
+
+
+
 ========================================================================================================(设备注册)<<<<<<<(device tree source)
 arch/arm64/boot/dts/mt6795.dtsi
 +++++++++++++++++++++++++++++++
@@ -186,7 +196,10 @@ hall_gpio@0 {
 
 =================================================================================
 
-========================================================================================================(设备注册)<<<<<(有了dtsi这个还用吗?)
+
+
+
+========================================================================================================(设备注册)<<<<<(有了dtsi这个还用吗?)<不用了!!>
 drivers/misc/mediatek/mach/mt6795/board.c
 +++++++++++++++++++++++++++++++++++++++++
 
@@ -208,11 +221,17 @@ drivers/misc/mediatek/mach/mt6795/mt_devs.c        <<<< 这个文件就没有被编译~
 HAL Layer:
 ++++++++++
 
- ----------------------------------------------------------------------------------------------------------------------------------------------------------------
- mediatek/hardware/sensor/sensors.c             |
- mediatek/hardware/sensor/SensorBase.cpp        |
- mediatek/hardware/sensor/Hwmsen.cpp            |   <<<<<<<  读取 hwmsensor 设备节点的文件!!!!  以及操作的接口(ioctl)
- mediatek/hardware/sensor/hwmsen_chip_info.c    |   <<<<<<<  定义了板子上所有 sensor 列表!!              "sSensorList"
+--------------------------------------------------------------------------------------------------
+hardware/libhardware/modules/sensors            || Original    ||
+vendor/mediatek/proprietary/hardware/sensor     || MTK Project || /system/lib/hw/sensors.mt6795.so
+--------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+vendor/mediatek/proprietary/hardware/sensor/sensors.c             |
+vendor/mediatek/proprietary/hardware/sensor/SensorBase.cpp        |
+vendor/mediatek/proprietary/hardware/sensor/Hwmsen.cpp            |   <<<<<<<  读取 hwmsensor 设备节点的文件!!!!  以及操作的接口(ioctl)!!!!!!!!!!!!!
+vendor/mediatek/proprietary/hardware/sensor/hwmsen_chip_info.c    |   <<<<<<<  定义了板子上所有 sensor 列表!!              "sSensorList"
+vendor/mediatek/proprietary/hardware/sensor/nusensors.cpp         |
                                                 |---------------------------------------------------------------------
                                                 |
                                                 |   struct sensors_poll_device_t {
@@ -279,18 +298,17 @@ HAL Layer:
                                                 |   };
                                                 |
                                                 |---------------------------------------------------------------------
- mediatek/hardware/sensor/nusensors.cpp         |
- mediatek/hardware/sensor/sensordebug.cpp       |
- mediatek/hardware/sensor/InputEventReader.cpp  |
- ----------------------------------------------------------------------------------------------------------------------------------------------------------------
- mediatek/hardware/sensor/Acceleration.cpp      |
- mediatek/hardware/sensor/Magnetic.cpp          |
- mediatek/hardware/sensor/Gyroscope.cpp         |
- mediatek/hardware/sensor/AmbienteLight.cpp     |
- mediatek/hardware/sensor/Proximity.cpp         |
- mediatek/hardware/sensor/Pressure.cpp          |
- mediatek/hardware/sensor/Temprature.cpp        |
- mediatek/hardware/sensor/BatchSensor.cpp       |
- ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+vendor/mediatek/proprietary/hardware/sensor/sensordebug.cpp       |
+vendor/mediatek/proprietary/hardware/sensor/InputEventReader.cpp  |
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+vendor/mediatek/proprietary/hardware/sensor/Acceleration.cpp      |
+vendor/mediatek/proprietary/hardware/sensor/Magnetic.cpp          |
+vendor/mediatek/proprietary/hardware/sensor/Gyroscope.cpp         |
+vendor/mediatek/proprietary/hardware/sensor/AmbienteLight.cpp     |
+vendor/mediatek/proprietary/hardware/sensor/Proximity.cpp         |
+vendor/mediatek/proprietary/hardware/sensor/Pressure.cpp          |
+vendor/mediatek/proprietary/hardware/sensor/Temprature.cpp        |
+vendor/mediatek/proprietary/hardware/sensor/BatchSensor.cpp       |
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ========================================================================================================

@@ -53,12 +53,16 @@ MTK_S1_CEI:
 
 MTK_S1_CEI(CTA Release):
 
-	repo init -u dianar:mtk_pre_cta/manifests.git     -b letv_master -m letv/ALUCARD_S1_PRE_CEI.xml  --repo-url=dianar:tools/repo.git
+    repo init -u dianar:mtk_pre_cta/manifests.git     -b letv_master -m letv/ALUCARD_S1_PRE_CEI.xml  --repo-url=dianar:tools/repo.git
                                 ^
 
 MTK_S1_LEUI:
 
     repo init -u dianar:mtk_pre_smt2/manifests.git    -b letv_master -m letv/ALUCARD_S1_PRE_LEUI.xml --repo-url=dianar:tools/repo.git
                                                                                             ^
+
+MTK_S1_LEUI(CTA Release):
+
+    repo init -u dianar:mtk_pre_cta/manifests.git     -b letv_master -m letv/ALUCARD_S1_PRE_LEUI.xml --repo-url=dianar:tools/repo.git
 
 =================================================================================================================================================================
