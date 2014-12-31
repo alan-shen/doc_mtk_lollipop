@@ -1,0 +1,45 @@
+========================================================================================================================================================================
+pre-recovery:
++++++++++++++
+init.rc:
+++++++++
+
+./system/core/rootdir/init.rc:650:service pre-recovery /system/bin/uncrypt
+./system/core/rootdir/init.rc-651-    class main
+./system/core/rootdir/init.rc-652-    disabled
+./system/core/rootdir/init.rc-653-    oneshot
+
+========================================================================================================================================================================
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2968-    /**
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2969-     * Low-level function to reboot the device. On success, this
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2970-     * function doesn't return. If more than 20 seconds passes from
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2971-     * the time a reboot is requested (120 seconds for reboot to
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2972-     * recovery), this method returns.
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2973-     *
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2974-     * @param reason code to pass to the kernel (e.g. "recovery"), or null.
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2975-     */
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2976-    public static void lowLevelReboot(String reason) {
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2977-        if (reason == null) {
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2978-            reason = "";
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2979-        }
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2980-        long duration;
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2981-        if (reason.equals(PowerManager.REBOOT_RECOVERY)) {
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2982-            // If we are rebooting to go into recovery, instead of
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2983-            // setting sys.powerctl directly we'll start the
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java:2984:            // pre-recovery service which will do some preparation for
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2985-            // recovery and then reboot for us.
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2986-            //
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2987-            // This preparation can take more than 20 seconds if
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2988-            // there's a very large update package, so lengthen the
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2989-            // timeout.
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java:2990:            SystemProperties.set("ctl.start", "pre-recovery");
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2991-            duration = 120 * 1000L;
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2992-        } else {
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2993-            SystemProperties.set("sys.powerctl", "reboot," + reason);
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2994-            duration = 20 * 1000L;
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2995-        }
+
+========================================================================================================================================================================
