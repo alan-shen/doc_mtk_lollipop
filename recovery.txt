@@ -43,3 +43,20 @@ frameworks/base/services/core/java/com/android/server/power/PowerManagerService.
 frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2995-        }
 
 ========================================================================================================================================================================
+如何生成签名密钥对?
++++++++++++++++++++
+
+1.生成公钥:           openssl genrsa -3 -out testkey.pem 2048
+2.转换成X509证书格式: openssl req -new -x509 -key testkey.pem -out testkey.x509.pem -days 10000 -subj 'xx'
+3.生成密钥:           openssl pkcs8 -in testkey.pem -topk8 -outform DER -out testkey.pk8 –nocry
+
+4.升级包签名:         java -jar signapk -w publickkey.x509[.pem] privatekey.pk8 input.zip output.zip
+========================================================================================================================================================================
+Android 中如何为 apk 或 ota.zip 签名?
++++++++++++++++++++++++++++++++++++++
+
+	/build/tools/signapk/signapk.jar
+
+	java -jar signapk.jar publickey privatekey input.zip output.zip
+
+========================================================================================================================================================================
