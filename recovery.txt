@@ -46,17 +46,43 @@ frameworks/base/services/core/java/com/android/server/power/PowerManagerService.
 如何生成签名密钥对?
 +++++++++++++++++++
 
-1.生成公钥:           openssl genrsa -3 -out testkey.pem 2048
-2.转换成X509证书格式: openssl req -new -x509 -key testkey.pem -out testkey.x509.pem -days 10000 -subj 'xx'
-3.生成密钥:           openssl pkcs8 -in testkey.pem -topk8 -outform DER -out testkey.pk8 –nocry
+1.生成公钥:
 
-4.升级包签名:         java -jar signapk -w publickkey.x509[.pem] privatekey.pk8 input.zip output.zip
+    /*
+     * -3 算法的参数(public exponent)
+     * 1024 密钥长度
+     */
+    openssl genrsa -3 \
+        -out testkey.pem \
+        1024
+
+2.产生 PKCS#10 格式的认证请求(证书):
+
+    /*
+     * 该命令主要包括一个公钥(包括公钥的过期时间等)和一些相关信息(如组织名称和联系人邮件地址)
+     */
+    openssl req -new -x509 \
+        -key testkey.pem \
+        -out testkey.x509.pem \
+        -days 10000 \
+        -subj '/C=US/ST=California/L=Mountain View/O=Android/OU=Android/CN=Andoid/emailAddress=android@android.com'
+
+3.产生 PKCS#8 格式的私钥(Private-Key Information Syntax Standard):
+
+    openssl pkcs8 -in testkey.pem -topk8 -outform DER -out testkey.pk8 -nocrypt
+
 ========================================================================================================================================================================
 Android 中如何为 apk 或 ota.zip 签名?
 +++++++++++++++++++++++++++++++++++++
 
-	/build/tools/signapk/signapk.jar
-
-	java -jar signapk.jar publickey privatekey input.zip output.zip
+    /*
+     * PATH : /build/tools/signapk/signapk.jar
+     * (1) 读取公钥和私钥;
+     * (2) 将签名信息写入到 MANIFEST.MF;
+     * (3) 对 manifest 签名写入到 CERT.SF;
+     * (4) 把对输出文件的签名和公钥写入到 CERT.RSA;
+     */
+	java -jar signapk.jar    publickey          privatekey      input.zip output.zip
+	java -jar signapk.jar    testkey.x509.pem   testkey.pk8     input.zip output.zip
 
 ========================================================================================================================================================================
