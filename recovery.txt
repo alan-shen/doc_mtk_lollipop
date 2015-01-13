@@ -43,6 +43,17 @@ frameworks/base/services/core/java/com/android/server/power/PowerManagerService.
 frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java-2995-        }
 
 ========================================================================================================================================================================
+Android RSA Keys:
++++++++++++++++++
+
+Reference DOC [build/target/product/security/README]
+
+1.Key PATH:              [build/target/product/security]
+2.Tool For Create Key:   [development/tools/make_key] <=== !!!
+3.eg
+	development/tools/make_key testkey  '/C=US/ST=California/L=Mountain View/O=Android/OU=Android/CN=Android/emailAddress=android@android.com'
+
+========================================================================================================================================================================
 如何生成签名密钥对?
 +++++++++++++++++++
 
