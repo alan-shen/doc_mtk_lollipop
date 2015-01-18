@@ -69,24 +69,26 @@ hardware/libhardware/hardware.c
 HAL Stub 如何运作:
 ------------------
 
-     如果要知道为什么通过声明结构体就将HALStub注册到系统中, 最好的方法是先知道怎么样通过 hw_get_module_t 来找到注册的硬件对象.
-
+     -------------------------------------------------------------------------------------------------------------------
+     如果要知道为什么通过声明结构体就将 HAL Stub 注册到系统中, 最好的方法是先知道怎么样通过 hw_get_module_t 来找到注册的硬件对象.
+     -------------------------------------------------------------------------------------------------------------------
       1.	static const char *variant_keys[] = { 
-      2.        “ro.hardware”, 
+      2.        “ro.hardware”
       3.        “ro.product.board”, 
       4.        “ro.board.platform”, 
       5.        “ro.arch” 
       6.	}; 
-      7.	// 由上面定义的字符串数组可知，HAL_VARIANT_KEYS_COUNT的值为4 
+      7.	// 由上面定义的字符串数组可知，HAL_VARIANT_KEYS_COUNT 的值为4 
       8.	struct constint HAL_VARIANT_KEYS_COUNT = (sizeof(variant_keys)/sizeof(variant_keys[0])); 
       9.	
      10.	int hw_get_module(const char *id, const struct hw_module_t **module){ 
-     11.        // 调用3个参数的hw_get_module_by_class函数 
+     11.        // 调用3个参数的 hw_get_module_by_class 函数 
      12.        return hw_get_module_by_class(id, NULL, module); 
      13.	} 
      14.	
      15.	int hw_get_module_by_class(const char *class_id, const char *inst, 
-     16.	const struct hw_module_t **module){ 
+     16.	const struct hw_module_t **module)
+     16.	{ 
      17.        int status; 
      18.        int i; 
      19.        // 声明一个hw_module_t指针变量hmi 
@@ -96,9 +98,9 @@ HAL Stub 如何运作:
      23.        char name[PATH_MAX]; 
      24.        // 由前面调用函数可知，inst ＝ NULL，执行else部分，将硬件id名拷贝到name数组里 
      25.        if(inst) 
-     26.        snprintf(name, PATH_MAX, “%s.%s”, class_id, inst); 
+     26.            snprintf(name, PATH_MAX, “%s.%s”, class_id, inst); 
      27.        else 
-     28.        strlcpy(name, class_id, PATH_MAX); 
+     28.            strlcpy(name, class_id, PATH_MAX); 
      29.        // i 循环5次 
      30.        for(i=0; i<HAL_VARIANT_KEYS_COUNT+1; i++){ 
      31.                if(i<HAL_VARIANT_KEYS_COUNT){ 
@@ -132,13 +134,14 @@ HAL Stub 如何运作:
      59.        void *handle; 
      60.        struct hw_module_t * hmi; 
      61.        // 通过dlopen打开so库 
-     62.        handle = dlopen(path, RTLD_NOW); 
+     62.        handle = dlopen(path, RTLD_NOW);                                                                          <===== dlopen()
      63.        // sym的值为”HMI”，这个名字还有印象吗？ 
      64.        const char * sym = HAL_MODULE_INFO_SYM_AS_STR; 
-     65.        // 通过dlsym从打开的库里查找”HMI”这个符号，如果在so代码里有定义的函数名或变量名为HMI，dlsym返回其地址hmi，将该地址转化成hw_module_t类型，即，硬件对象，这招够狠，“杀鸡取卵” 
-     66.        hmi = (struct hw_module_t *)dlsym(handle, sym); 
+     65.        // 通过dlsym从打开的库里查找”HMI”这个符号，如果在so代码里有定义的函数名或变量名为HMI，dlsym返回其地址i  <===== !!!
+     65         // 将该地址转化成hw_module_t类型，即，硬件对象，这招够狠，“杀鸡取卵” 
+     66.        hmi = (struct hw_module_t *)dlsym(handle, sym);                                                           <===== dlsym()
      67.        // 判断找到的硬件对象的id是否和要查找的id名一致，不一致出错退出 
-     68.        	// 取了卵还要验证下是不是自己要的“卵” 
+     68.        // 取了卵还要验证下是不是自己要的“卵” 
      69.        if(strcmp(id, hmi->) != 0){ 
      70.                // 出错退出处理 
      71.        } 
@@ -148,8 +151,9 @@ HAL Stub 如何运作:
      75.        *pHmi = hmi; 
      76.        // 成功返回 
      77.	}
+     -------------------------------------------------------------------------------------------------------------------
 
-     通过上面代码的注释分析可知, 硬件对象声明的结构体代码被编译成了 so 库,
+     通过上面代码的注释分析可知, 硬件对象声明的结构体代码被编译成了 so 库,   <===== HMI
      由于该结构体声明为 const 类型, 被 so 库包含在其静态代码段里, 
      要找到硬件对象, 
          首先要找到其对应的 so 库, 
@@ -158,125 +162,141 @@ HAL Stub 如何运作:
              “鸡”是: so 库,
              “卵”:   硬件对象 led_module_t 结构.
 
+     -------------------------------------------------------------------------------------------------------------------
+
      在声明结构体 led_module_t 时, 其名字统一定义为了 HMI,
      而这么做的目的就是为了通过 dlsym 来查找 led HAL Stub 源码生成的 so 库里的 ”HMI ”符.
      现在很明显了, 
          我们写的 HAL Stub 代码最终要编译 so 库文件,
          并且库文件名为:     led.default.so(当然可以设置四个系统属性之一来指定名字为: led.属性值.so)
          并且库的所在目录为: /system/lib/hw/
+     -------------------------------------------------------------------------------------------------------------------
+
 ------------------------------------------------------------------------------------------------------------------------
 两个符号常量和一个函数
 ----------------------
-                1.	// 这个就是HAL Stub对象固定的名字 
-                        2.	#define HAL_MODULE_INFO_SYM                          HMI 
-                        3.	// 这是字符串形式的名字 
-                        4.	#define HAL_MODULE_INFO_SYM_AS_STR        "HMI" 
-                        5.	//这个函数是通过硬件名来获得硬件HAL Stub对象 
-                        6.	int hw_get_module(const char *id, const struct hw_module_t **module);
 
-当用户调用hw_get_module函数时，第一个参数传硬件id名，那么这个函数会从当前系统注册的硬件对象里查找传递过来的id名对应的硬件对象，然后返回之。
+      1.	// 这个就是HAL Stub对象固定的名字 
+      2.	#define HAL_MODULE_INFO_SYM                HMI 
+      3.	// 这是字符串形式的名字 
+      4.	#define HAL_MODULE_INFO_SYM_AS_STR        "HMI" 
+      5.	//这个函数是通过硬件名来获得硬件HAL Stub对象 
+      6.	int hw_get_module(const char *id, const struct hw_module_t **module);
+
+      当用户调用 hw_get_module 函数时，第一个参数传硬件 id 名，那么这个函数会从当前系统注册的硬件对象里查找传递过来的 id 名对应的硬件对象，然后返回之。
 
 ------------------------------------------------------------------------------------------------------------------------
 从调用者的角度，我们基本上没有什么障碍了，那如何注册一个硬件对象呢？
 -------------------------------------------------------------------
 
-很简单，只需要声明一个结构体即可，看下面这个Led Stub注册的例子：
+      ------------------------------------------------------------------------------------------------------------------
+      很简单，只需要声明一个结构体即可，看下面这个 Led Stub 注册的例子：
 
-                1.	const struct led_module_t HAL_MODULE_INFO_SYM = { 
-                        2.        common: {        // 初始化父结构hw_module_t成员 
-                        3.                tag: HARDWARE_MODULE_TAG, 
-                        4.                version_major: 1, 
-                        5.                version_minor: 0, 
-                        6.                id: LED_HARDWARE_MODULE_ID, 
-                        7.                name: "led HAL Stub", 
-                        8.                author: "farsight", 
-                        9.                methods: &led_module_methods, 
-                        10.        }, 
-                        11.        // 扩展属性放在这儿 
-                        12.	};
+      1.	const struct led_module_t HAL_MODULE_INFO_SYM = { 
+      2.        // 初始化父结构hw_module_t成员 
+      2.        common: { 
+      3.                tag: HARDWARE_MODULE_TAG, 
+      4.                version_major: 1, 
+      5.                version_minor: 0, 
+      6.                id: LED_HARDWARE_MODULE_ID, 
+      7.                name: "led HAL Stub", 
+      8.                author: "farsight", 
+      9.                methods: &led_module_methods,   <=== 
+     10.        }, 
+     11.        // 扩展属性放在这儿                                                                                <<<<<===== 扩展属性!!!!! 
+     12.	};
 
-对，就这么简单，我们只需要声明一个结构体led_moduel_t，起名叫HAL_MODULE_INFO_SYM，也就是固定的名字：HMI，然后将这个结构体填充好就行了。led_module_t又是什么结构体类型啊？前面分析hw_modult_t类型时说过，我们可以“继承”hw_module_t类型，创建自己的硬件对象，然后自己再扩展特有属性，这里的led_module_t就是“继承”的hw_module_t类型。注意，继承加上了双引号，因为在C语言里没有继承这个概念：
+     对，就这么简单，我们只需要声明一个结构体 led_moduel_t, 起名叫 HAL_MODULE_INFO_SYM, 也就是固定的名字：HMI,
+     然后将这个结构体填充好就行了.
+     led_module_t 又是什么结构体类型啊？
+         前面分析 hw_modult_t 类型时说过, 我们可以“继承 hw_module_t 类型, 创建自己的硬件对象, 
+         然后自己再扩展特有属性.
+     这里的 led_module_t 就是“继承” hw_module_t 类型.
+     注意, 继承加上了双引号, 因为在C语言里没有继承这个概念:
 
-                1.	struct led_module_t { 
-                        2.        struct hw_module_t common; 
-                        3.	};
+      1.	struct led_module_t { 
+      2.        struct hw_module_t common; 
+      3.	};
 
-结构体led_module_t封装了hw_module_t结构体，也就是说led_module_t这个新（子）结构体包含了旧（父）结构体，在新结构体里可以再扩展一些新的成员。结构体本身就具有封装特性，这不就是面向对象的封装和继承吗！
+     结构体 led_module_t 封装了 hw_module_t 结构体,
+     也就是说 led_module_t 这个新（子）结构体包含了旧（父）结构体, 在新结构体里可以再扩展一些新的成员.
+     结构体本身就具有封装特性，这不就是面向对象的封装和继承吗！
 
-在上面的类图里，把hw_module_methods_t里封装的open函数指针指针写成open方法。
+     -------------------------------------------------------------------------------------------------------------------
+     把 hw_module_methods_t 里封装的 open 函数指针指针写成 open 方法.
 
-该open方法既：methods，自然也被子结构体给“继承”下来，我们将它初始化为led_module_methods的地址，该结构是hw_module_methods_t类型的，其声明代码如下：
+     该 open 方法既：
+         methods，自然也被子结构体给“继承”下来，我们将它初始化 led_module_methods 的地址，该结构是hw_module_methods_t类型的，其声明代码如下：
 
-[cpp] view plaincopyprint?
+      1.	static struct hw_module_methods_t led_module_methods = { 
+      2.        open: led_device_open 
+      3.	};
 
-                1.	static struct hw_module_methods_t led_module_methods = { 
-                        2.        open: led_device_open 
-                        3.	};
+     -------------------------------------------------------------------------------------------------------------------
+     简洁，我喜欢！！，它里面仅有的 open 成员是个函数指针，它被指向 led_device_open 函数:
 
-简洁，我喜欢！！，它里面仅有的open成员是个函数指针，它被指向led_device_open函数:
+      1.	static int led_device_open(const struct hw_module_t* module, const char* name, struct hw_device_t** device) 
+      3.	{ 
+      4.        struct led_device_t *led_device; 
+      5.        LOGI("%s E ", __func__); 
+      6.        led_device = (struct led_device_t *)malloc(sizeof(*led_device)); 
+      7.        memset(led_device, 0, sizeof(*led_device)); 
+      8.	
+      9.        // init hw_module_t 
+     10.        led_device->common.tag= HARDWARE_DEVICE_TAG; 
+     11.        led_device->common.version = 0; 
+     12.        led_device->common.module= module; 
+     13.        led_device->common.close = led_device_close; 
+     14.	
+     15.        // init operation interface 
+     16.        led_device->set_on= led_set_on; 
+     17.        led_device->set_off= led_set_off; 
+     18.        led_device->get_led_count = led_getcount; 
+     19.        *device= (struct hw_device_t *)led_device; 
+     20.	
+     21.        if((fd=open("/dev/leds",O_RDWR))==-1) 
+     22.        { 
+     23.            LOGI("open error"); 
+     24.            return -1; 
+     25.        }else 
+     26.            LOGI("open ok\n"); 
+     27.	
+     28.        return 0; 
+     29.	}
 
-[cpp] view plaincopyprint?
+     led_device_open函数的功能：
+            Ø  分配硬件设备操作结构体led_device_t，该结构体描述硬件操作行为
+            Ø  初始化led_device_t的父结构体hw_device_t成员
+            Ø  初始化led_device_t中扩展的操作接口
+            Ø  打开设备，将led_device_t结构体以父结构体类型返回（面向对象里的多态）
 
-                1.	static int led_device_open(const struct hw_module_t* module, const char* name, 
-                        2.	 struct hw_device_t** device) 
-                        3.	{ 
-                        4.        struct led_device_t *led_device; 
-                        5.        LOGI("%s E ", __func__); 
-                        6.        led_device = (struct led_device_t *)malloc(sizeof(*led_device)); 
-                        7.        memset(led_device, 0, sizeof(*led_device)); 
-                        8.	
-                        9.        // init hw_module_t 
-                        10.       led_device->common.tag= HARDWARE_DEVICE_TAG; 
-                        11.       led_device->common.version = 0; 
-                        12.       led_device->common.module= module; 
-                        13.       led_device->common.close = led_device_close; 
-                        14.	
-                        15.       // init operation interface 
-                        16.       led_device->set_on= led_set_on; 
-                        17.       led_device->set_off= led_set_off; 
-                        18.       led_device->get_led_count = led_getcount; 
-                        19.       *device= (struct hw_device_t *)led_device; 
-                        20.	
-                        21.       if((fd=open("/dev/leds",O_RDWR))==-1) 
-                        22.        { 
-                        23.                LOGI("open error"); 
-                        24.                return -1; 
-                        25.        }else 
-                        26.        LOGI("open ok\n"); 
-                        27.	
-                        28.        return 0; 
-                        29.	}
+     -------------------------------------------------------------------------------------------------------------------
+     我们来看下led_device_t和其父结构体hw_device_t的关系：
 
-led_device_open函数的功能：
-        Ø  分配硬件设备操作结构体led_device_t，该结构体描述硬件操作行为
-        Ø  初始化led_device_t的父结构体hw_device_t成员
-        Ø  初始化led_device_t中扩展的操作接口
-        Ø  打开设备，将led_device_t结构体以父结构体类型返回（面向对象里的多态）
-
-我们来看下led_device_t和其父结构体hw_device_t的关系：
-
-[cpp] view plaincopyprint?
-
-                1.	struct led_device_t { 
-                        2.        struct hw_device_t common; // led_devict_t的父结构，它里面只封装了close方法 
-                        3.        // 下面三个函数指针是子结构led_device_t对父结构hw_device_t的扩展，可以理解为子类扩展了父类增加了三个方法 
-                        4.        int (*getcount_led)(struct led_device_t *dev); 
-                        5.        int (*set_on)(struct led_device_t *dev); 
-                        6.        int (*set_off)(struct led_device_t *dev); 
-                        7.	};
+      1.	struct led_device_t { 
+      2.        struct hw_device_t common; // led_devict_t的父结构，它里面只封装了close方法 
+      3.        // 下面三个函数指针是子结构led_device_t对父结构hw_device_t的扩展，可以理解为子类扩展了父类增加了三个方法     <<<<<===== 扩展属性!!!!! 
+      4.        int (*getcount_led)(struct led_device_t *dev); 
+      5.        int (*set_on)(struct led_device_t *dev); 
+      6.        int (*set_off)(struct led_device_t *dev); 
+      7.	};
 
 
-这三个接口函数直接和底层驱动打交道去控制硬件，具体驱动部分我们不去讲，那是另外一个体系了。
+     这三个接口函数直接和底层驱动打交道去控制硬件，具体驱动部分我们不去讲，那是另外一个体系了。
 
-总结一下：
-        我们有一个硬件id名，通过这个id调用hw_get_module(char*id, struct hw_module_t **module),这个函数查找注册在当前系统中与id对应的硬件对象并返回之，硬件对象里有个通过hw_module_methods_t结构封装的open函数指针，回调这个open函数，它返回封装有硬件操作接口的led_device_t结构体，这样我们可以通过这个硬件接口去间接的访问硬件了。
-        在这个过程中hw_get_module返回的是子结构体类型led_module_t，虽然函数的第二个参数类型为hw_module_t的父类型，这里用到了面向对象里的多态的概念。
+     -------------------------------------------------------------------------------------------------------------------
+     总结一下：
+
+         我们有一个硬件 id 名, 通过这个 id 调用 hw_get_module(char*id, struct hw_module_t **module),
+             这个函数查找注册在当前系统中与 id 对应的硬件对象并返回之，
+                 硬件对象里有个通过 hw_module_methods_t 结构封装的 open 函数指针，回调这个 open 函数，
+                     它返回封装有硬件操作接口的 led_device_t 结构体，
+                         这样我们可以通过这个硬件接口去间接的访问硬件了. <==== !!!
+        
+         在这个过程中 hw_get_module 返回的是子结构体类型 led_module_t, 
+         虽然函数的第二个参数类型为 hw_module_t 的父类型, 这里用到了面向对象里的多态的概念.
+     -------------------------------------------------------------------------------------------------------------------
+
 ------------------------------------------------------------------------------------------------------------------------
-
-=======================================================================================================================
-Sensor HAL:
-+++++++++++
-
-
 
 =======================================================================================================================
