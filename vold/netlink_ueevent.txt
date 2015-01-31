@@ -1,0 +1,115 @@
+============================================================================================================
+============================================================================================================
+Netlink 套接字:
++++++++++++++++
+
+	http://zh.wikipedia.org/wiki/Netlink
+
+	Netlink 套接字是用以实现用户进程与内核进程通信的一种特殊的进程间通信(IPC).
+	Netlink 套接字可以使用标准的套接字APIs来创建.
+	Netlink 包含于头文件 linux/netlink.h 中.
+
+	Netlink 是套接字家族中的一员, 主要用内核与用户空间的进程间,用户进程间的通讯.
+			然而它并不像网络套接字可以用于主机间通讯, Netlink 只能用于同一主机上进程通讯, 并通过 PID 来标识它们.
+
+	Netlink 被设计为在 Linux 内核与用户空间进程传送各种网络信息. 
+			网络工具 iproute2 利用 Netlink 从用户空间与内核进行通讯.
+			Netlink 由一个在用户空间的标准的 Socket 接口和内核模块提供的内核 API 组成.
+			Netlink 的设计比 ioctl 更加灵活, Netlink 使用了AF_NETLINK Socket 家族.
+
+============================================================================================================
+Uevent 机制:
+++++++++++++
+
+	uevent, user space event. 内核与用户空间的一种通信机制, 基于 netlink 机制, 主要用于设备驱动模型, 例如热插拔.
+
+	也就是说在某个时刻触发某个事件并通知给用户空间.
+ 
+	[事件]
+
+		enum kobject_action {
+			KOBJ_ADD,
+			KOBJ_REMOVE,
+			KOBJ_CHANGE,
+			KOBJ_MOVE,
+			KOBJ_ONLINE,
+			KOBJ_OFFLINE,
+			KOBJ_MAX
+		};
+ 
+	[触发点]
+ 
+		kobject_uevent()
+ 
+			eg. device_add() 中的触发:
+				kobject_uevent(&dev->kobj, KOBJ_ADD);
+ 
+		在 kobject_uevent() 中会先执行集成在 kset 中的 kset_uevent_ops, 之后再通过 netlink 传递给用户空间.
+ 
+			struct kset_uevent_ops {
+				int (* const filter)(struct kset *kset, struct kobject *kobj);
+				const char *(* const name)(struct kset *kset, struct kobject *kobj);
+				int (* const uevent)(struct kset *kset, struct kobject *kobj,
+				struct kobj_uevent_env *env);
+			};
+ 
+		filter 用于判断 uevent 是否要发出去, name 用于得到 subsystem 的名字, uevent 用于填充 env 变量.
+ 
+		我们可以看到 kobject_uevent() 中的代码:
+ 
+			if (uevent_ops && uevent_ops->filter)
+				if (!uevent_ops->filter(kset, kobj)) {
+				......
+			}
+			/* originating subsystem */
+			if (uevent_ops && uevent_ops->name) {
+				subsystem = uevent_ops->name(kset, kobj);
+				......
+			}
+  
+			......
+ 
+			/* let the kset specific function add its stuff */
+			if (uevent_ops && uevent_ops->uevent) {
+				retval = uevent_ops->uevent(kset, kobj, env);
+				......
+			}
+ 
+		最后调用 netlink 接口发送出去, 用户层会根据所设置的 env 变量来启动相应操作, 至于 env 变量设置内容我不作深究.
+ 
+		以上就是内核中uevent机制的简述。
+
+		-----------------------------------------------------------------------------------------------------
+ 
+		下面就简单提一下应用层的一些机制(注：以下我并没有详细去分析，而是抄录某位大虾的原创)：
+ 
+		uevent 的用户空间程序有两个, 一个是udev, 一个是mdev.
+ 
+			[udev] 通过 netlink 监听 uevent 消息, 它能完成两个功能:
+				1．自动加载模块
+				2．根据uevent消息在dev目录下添加, 删除设备节点
+
+			[mdev] mdev 在 busybox 的代码包中能找到, 它通过上节提到的 uevent_helper 函数被调用.
+
+		udev 的模块自动加载过程:
+ 
+			etc目录下有一个uevent规则文件/etc/udev/rules.d/50-udev.rules
+			udev程序收到uevent消息后，在这个规则文件里匹配，如果匹配成功，则执行这个匹配定义的shell命令。
+			例如，规则文件里有这么一行：
+				ACTION=="add", SUBSYSTEM=="?*", ENV{MODALIAS}=="?*", RUN+="/sbin/modprobe $env{MODALIAS}"
+			所以，当收到uevent的add事件后，shell能自动加载在MODALIAS中定义的模块。
+
+		mdev 的模块自动加载过程与之类似:
+
+			它的配置文件在/etc/mdev.conf中。例如：
+				$MODALIAS=.* 0:0 660 @modprobe "$MODALIAS"
+			这条规则指的是：当收到的环境变量中含有MODALIAS，那么加载MODALIAS代表的模块。
+			mdev 的详细说明在busybox的docs/mdev.txt中.
+
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
