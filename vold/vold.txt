@@ -1,15 +1,100 @@
 ============================================================================================================
 /system/vold:
-++++++++++++++
++++++++++++++
 
 --------------------------------------------------------------------------------------
-(1) VolumeManager[vm]
+(1) NetlinkManager[nm]
+----------------------
+
+	NM 模块的功能就是从 Kernel 接收 Uevent 消息, 然后转化成一个 NetlinkEvent 对象,
+	并经过 onEvent 解析后, 最后会调用 VM 的处理函数来处理这个 NetlinkEvent 对象.
+
+	NetlinkHandler[nlh]
+
+        +----------------------------------------+
+        | SocketListener----|+ onDataAvailable() |
+        |       ^                                |
+        |      /|\                               |
+        |       |                                |
+        | NetlinkListener---|+ onDataAvailable() |
+        |                   |+ onEvent()         |
+        |       ^                                |
+        |      /|\                               |
+        |       |                                |
+        | NetlinkHandler----|+ start()           |
+        |                   |+ stop()            |
+        |                   |+ onEvent()         |
+        +----------------------------------------+
+
+		(1.1) 创建NLH  : 其构造函数中调用基类NetlinkListener的构造,NL构造函数中再调用 SocketListener 的构造, 并把 mSock 传递下去.
+		(1.2) start分析: 真正 listen 上边这个 socket 的地方!并创建线程 threadStart()
+				NetlinkListener::start()         {this->startListener();}
+				 SocketListener::startListener() {;;} 
+		(1.3) 工作线程分析:
+				 SocketListener::threadStart()   {runListener();}
+				 SocketListener::runListener()   {;;}
+					工作线程退出的条件是匿名管道可读,但在一般情况下它不需要退出,所以可以胡略此项内容;
+					不论是服务端还是客户端,收到数据后都会调用 onDataAvailable 进行处理.
+		(1.4) 数据处理:
+				NetlinkListener::onDataAvailable() {}
+					recv() 接受数据;
+					new 一个 NetlinkEvent, 通过 decode() 将收到的 Uevent 信息填充到一个 NetlinkEvent 对象中.
+					最后调用 onEvent() 并传递 NetlinkEvent 对象.
+				 NetlinkHandler::onEvent()         {}
+					这里可以通过添加 evt->dump() 来dump获取到的 Uevent 信息;
+					只处理 subsys 为 "block" 的 Uevent.
 
 --------------------------------------------------------------------------------------
-(2) NetlinkManager[nm]
+(2) VolumeManager[vm]
+----------------------
+
+	Vold 使用 VM 模块的流程:
+		. 调用 Instance 创建一个 VM 对象;
+		. 调用 setBroadcaster 设置 CL 对象;
+		. 调用 start 启动 VM;
+		. 调用 process_config 配置 VM.
+
+	(2.1) 创建 VM 和对 start 的分析(VM 采用单例模式, 全进程只存在一个 VM 对象)
+	(2.2) process_config 分析: 解析 fstab, 构造 DirectVolume 对象, 并添加到 VM 中, vm->addVolume(dv)
+	(2.3) DirectVolume 分析:
+			DirectVolume 从 Volume 类派生, 可把它看作是一个外部存储卡在代码中的代表.
+			它封装了外部存储卡的操作, 例如加载/卸载存储卡,格式化存储卡等.
+	(2.4) NM 和 VM 的交互:
+			NM 接受到 Uevent 信息后, 会调用 VM 模块进行处理, 然后 DirectVolume 应声而动.
+				NetlinkHandler::onEvent(NetlinkEvent *evt)
+				 VolumeManager::handleBlockEvent(NetlinkEvent *evt)  {...细节....}
+
+	总结:
+
+		VM 模块的主要功能是管理 Android 系统中外部存储设备.
+
+			. SD 卡的变动(例如热插拔)将导致 kernel 发送 Uevent 信息给 NM 模块;
+			. NM 模块调用 VM 模块处理这些 Uevent 信息;
+			. VM 模块遍历他所持有的 Volume 对象, Volume 对象根据 addPath 添加的 DEVPATH 和
+				Uevent 消息中的 DEVPATH 来判断自己是否可以处理这个消息.
 
 --------------------------------------------------------------------------------------
 (3) CommandListener[cl]
+-----------------------
+
+	Vold 使用 CL 模块的流程:
+		. 使用 new 创建一个 CommandListener 对象;
+		. 调用 CL 的 startListener 函数.
+
+	(3.1) 创建 CommandListener
+	(3.2) startListener 的分析和数据处理
+		   SocketListener::startListener()
+				当 CL 收到数据时, 会调用 onDataAvailable 函数, 它由 FrameworkListener 实现.
+		FrameworkListener::onDataAvailable()
+				dispatchCommand 最终会根据收到的命令名(eg."Volume""Share"等)
+				来调用对应的命令对象(eg."VolumeCmd""ShareCmd")的 runCommand 函数以处理请求.
+
+	总结:
+
+		. 建立一个监听端的 socket;
+		. 接受客户端的连接和请求, 并调用对应 Command 对象的 runCommand 函数处理.
+
+	目前, CL 模块唯一的客户端就是 MountService!!
 
 --------------------------------------------------------------------------------------
 
