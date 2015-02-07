@@ -14,6 +14,7 @@
 #include <linux/netlink.h>
 
 #define UEVENT_MSG_LEN 4096
+
 struct luther_gliethttp {
     const char *action;
     const char *path;
@@ -22,32 +23,9 @@ struct luther_gliethttp {
     int major;
     int minor;
 };
+
 static int open_luther_gliethttp_socket(void);
 static void parse_event(const char *msg, struct luther_gliethttp *luther_gliethttp);
-
-int main(int argc, char* argv[])
-{
-    int device_fd = -1;
-    char msg[UEVENT_MSG_LEN+2];
-    int n;
-    
-    device_fd = open_luther_gliethttp_socket();
-    printf("device_fd = %d\n", device_fd);
-
-    do {
-        while((n = recv(device_fd, msg, UEVENT_MSG_LEN, 0)) > 0) {
-            struct luther_gliethttp luther_gliethttp;
-
-            if(n == UEVENT_MSG_LEN) /* overflow -- discard */
-                continue;
-
-            msg[n] = '/0';
-            msg[n+1] = '/0';
-
-            parse_event(msg, &luther_gliethttp);
-        }
-    } while(1);
-}
 
 static int open_luther_gliethttp_socket(void)
 {
@@ -84,10 +62,10 @@ static void parse_event(const char *msg, struct luther_gliethttp *luther_glietht
     luther_gliethttp->minor = -1;
 
     /* currently ignoring SEQNUM */
-    printf("========================================================\n");
+    //printf("========================================================\n");
     while (*msg) {
 
-        printf("%s\n", msg);
+        //printf("%s\n", msg);
 
         if (!strncmp(msg, "ACTION=", 7)) {
             msg += 7;
@@ -114,7 +92,58 @@ static void parse_event(const char *msg, struct luther_gliethttp *luther_glietht
             ;
     }
 
+#if 0
     printf("event { '%s', '%s', '%s', '%s', %d, %d }\n",
                     luther_gliethttp->action, luther_gliethttp->path,luther_gliethttp->subsystem,
                     luther_gliethttp->firmware, luther_gliethttp->major,luther_gliethttp->minor);
+	printf("SUBSYSTEM: %s\n", luther_gliethttp->subsystem);
+	printf("   ACTION: %s\n", luther_gliethttp->action);
+	printf("  DEVPATH: %s\n", luther_gliethttp->path);
+	printf(" FIRMWARE: %s\n", luther_gliethttp->firmware);
+	printf("    MAJOR: %d, MINOR: %d\n", luther_gliethttp->major, luther_gliethttp->minor);
+	printf("\n");
+#else
+#if 0
+    printf("'%s', '%s', '%d:%d', '%s', '%s'\n",
+					luther_gliethttp->subsystem,
+                    luther_gliethttp->action,
+					luther_gliethttp->major,
+					luther_gliethttp->minor,
+					luther_gliethttp->path,
+                    luther_gliethttp->firmware
+		);
+#endif
+    printf("[%3d:%-3d], '%s', '%s', '%s', '%s'\n",
+					luther_gliethttp->major,
+					luther_gliethttp->minor,
+					luther_gliethttp->subsystem,
+                    luther_gliethttp->action,
+					luther_gliethttp->path,
+                    luther_gliethttp->firmware
+		);
+#endif
+}
+
+int main(int argc, char* argv[])
+{
+    int device_fd = -1;
+    char msg[UEVENT_MSG_LEN+2];
+    int n;
+    
+    device_fd = open_luther_gliethttp_socket();
+    printf("device_fd = %d\n", device_fd);
+
+    do {
+        while((n = recv(device_fd, msg, UEVENT_MSG_LEN, 0)) > 0) {
+            struct luther_gliethttp luther_gliethttp;
+
+            if(n == UEVENT_MSG_LEN) /* overflow -- discard */
+                continue;
+
+            msg[n] = '/0';
+            msg[n+1] = '/0';
+
+            parse_event(msg, &luther_gliethttp);
+        }
+    } while(1);
 }
