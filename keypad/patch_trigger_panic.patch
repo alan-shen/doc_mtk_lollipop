@@ -1,0 +1,62 @@
+diff --git a/drivers/misc/mediatek/keypad/kpd.c b/drivers/misc/mediatek/keypad/kpd.c
+index 0f97347..dc1aa3b 100644
+--- a/drivers/misc/mediatek/keypad/kpd.c
++++ b/drivers/misc/mediatek/keypad/kpd.c
+@@ -396,7 +396,6 @@ void kpd_pmic_rstkey_handler(unsigned long pressed)
+ }
+ 
+ /*********************************************************************/
+-
+ /*********************************************************************/
+ static void kpd_keymap_handler(unsigned long data)
+ {
+@@ -406,6 +405,12 @@ static void kpd_keymap_handler(unsigned long data)
+ 	u16 hw_keycode, linux_keycode;
+ 	kpd_get_keymap_state(new_state);
+ 
++	/* pengru: trigger panic */
++	static int               trigger_key;
++	static bool              trigger_pressed;
++	static long unsigned int trigger_time;
++	/* pengru: trigger panic */
++
+ 	for (i = 0; i < KPD_NUM_MEMS; i++) {
+ 		change = new_state[i] ^ kpd_keymap_state[i];
+ 		if (!change)
+@@ -429,6 +434,36 @@ static void kpd_keymap_handler(unsigned long data)
+ 				kpd_print("Linux keycode = 0\n");
+ 				continue;
+ 			}
++			/* pengru: trigger panic */
++			// 0 -> volumeup
++			//printk(KERN_EMERG "LETV : hw_keycode:keycode:press %u:%d:%d\n", hw_keycode, linux_keycode, pressed);
++			if( linux_keycode == KEY_VOLUMEUP ){
++				// press, not amed
++				if( pressed == 1 ){
++					if (trigger_key == 0) {
++						trigger_time = jiffies_to_msecs(jiffies)/1000;
++						// trigger key pressed
++						trigger_key = 1;
++						printk(KERN_EMERG "LETV : Panic key is pressed, Please hold on 15 seconds to trigger a panic. %lu\n", trigger_time);
++					}
++				}
++				// release
++				else{
++					if (trigger_key == 1) {
++						/* caculate the total time user holded */
++						trigger_time = jiffies_to_msecs(jiffies)/1000 - trigger_time;
++						printk(KERN_EMERG "LETV : Panic key hold for %lu s\n", trigger_time);
++						if (trigger_time >= 15) {
++							printk(KERN_EMERG "LETV : =====================================\n");
++							show_state();
++							panic("Panic key triggers panic!");
++						}
++						// trigger key released
++						trigger_key = 0;
++					}
++				}
++			}
++			/* pengru: trigger panic */
+ 			kpd_aee_handler(linux_keycode, pressed);
+ 
+ 			kpd_backlight_handler(pressed, linux_keycode);
