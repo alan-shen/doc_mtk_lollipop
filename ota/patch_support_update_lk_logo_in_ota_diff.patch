@@ -1,0 +1,31 @@
+diff --git a/tools/releasetools/ota_from_target_files b/tools/releasetools/ota_from_target_files
+index c9814a5..3a3c892 100755
+--- a/tools/releasetools/ota_from_target_files
++++ b/tools/releasetools/ota_from_target_files
+@@ -1651,6 +1651,26 @@ else
+   ota_scatter = open(scatter_path).read()
+   common.ZipWriteStr(output_zip, "scatter.txt", ota_scatter)
+ 
++  #shenpengru: support lk/logo update in diff
++  if OPTIONS.preloader is not None or OPTIONS.uboot is not None or OPTIONS.logo is not None:
++    script.AppendExtra('assert(run_program(\"/system/bin/dd\", \"if=/dev/zero\", \"of=/proc/driver/mtd_writeable\", \"bs=3\", \"count=1\"));')
++
++  if OPTIONS.logo is not None:
++    logo_img = open(OPTIONS.logo).read()
++    common.ZipWriteStr(output_zip, "logo.img", logo_img)
++    script.WriteRawImage2("logo", "logo.img")
++
++  if OPTIONS.preloader is not None:
++    preloader_img = open(OPTIONS.preloader).read()
++    common.ZipWriteStr(output_zip, "preloader.img", preloader_img)
++    script.WriteRawImage2("preloader", "preloader.img")
++
++  if OPTIONS.uboot is not None:
++    uboot_img = open(OPTIONS.uboot).read()
++    common.ZipWriteStr(output_zip, "uboot.img", uboot_img)
++    script.WriteRawImage2("uboot", "uboot.img")
++  #shenpengru: support lk/logo update in diff
++
+   #tonykuo start
+   if OPTIONS.tee is not None:
+     tee_img = open(OPTIONS.tee).read()
