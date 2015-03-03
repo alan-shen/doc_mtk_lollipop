@@ -12,8 +12,31 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <linux/netlink.h>
+#include <getopt.h>
 
 #define UEVENT_MSG_LEN 4096
+
+/*************************************** Version Info ************************************* */
+#define DESCRIPTION ""
+#define VERSION     "alpha 0.1.0"
+#define AUTHOR      "shenpengru@gmail.com"
+/*************************************** Version Info **************************************/
+#define SHOW_VERSION    (1)
+#define HIDE_VERSION    (0)
+void help(int version)
+{
+    if(version){
+        printf("\n\t========== print uevent info =============\n\n");
+        printf("\tDescription : %s\n", DESCRIPTION);
+        printf("\tVersion     : %s\n", VERSION );
+        printf("\tAuthor      : %s\n", AUTHOR );
+        printf("\n\t==========================================\n\n");
+    }
+    else{
+        printf("\n\tUsage:\n" );
+        printf("\t\tgetuevent --filter block\n");
+    }
+}
 
 struct luther_gliethttp {
     const char *action;
@@ -26,6 +49,8 @@ struct luther_gliethttp {
 
 static int open_luther_gliethttp_socket(void);
 static void parse_event(const char *msg, struct luther_gliethttp *luther_gliethttp);
+
+static char filter[50]={"NO"};
 
 static int open_luther_gliethttp_socket(void)
 {
@@ -103,24 +128,16 @@ static void parse_event(const char *msg, struct luther_gliethttp *luther_glietht
 	printf("    MAJOR: %d, MINOR: %d\n", luther_gliethttp->major, luther_gliethttp->minor);
 	printf("\n");
 #else
-#if 0
-    printf("'%s', '%s', '%d:%d', '%s', '%s'\n",
-					luther_gliethttp->subsystem,
-                    luther_gliethttp->action,
-					luther_gliethttp->major,
-					luther_gliethttp->minor,
-					luther_gliethttp->path,
-                    luther_gliethttp->firmware
-		);
-#endif
-    printf("[%3d:%-3d], '%s', '%s', '%s', '%s'\n",
-					luther_gliethttp->major,
-					luther_gliethttp->minor,
-					luther_gliethttp->subsystem,
-                    luther_gliethttp->action,
-					luther_gliethttp->path,
-                    luther_gliethttp->firmware
-		);
+	if(!strncmp(filter, "NO", 2)){
+		printf("[%3d:%-3d], '%s', '%s', '%s', '%s'\n", luther_gliethttp->major, luther_gliethttp->minor,
+					luther_gliethttp->subsystem, luther_gliethttp->action,luther_gliethttp->path,luther_gliethttp->firmware);
+	}
+	else{
+		if (!strncmp(luther_gliethttp->subsystem, filter, sizeof(filter))) {
+			printf("[%3d:%-3d], '%s', '%s', '%s', '%s'\n", luther_gliethttp->major,luther_gliethttp->minor,luther_gliethttp->subsystem,
+						luther_gliethttp->action,luther_gliethttp->path,luther_gliethttp->firmware);
+		}
+	}
 #endif
 }
 
@@ -129,6 +146,41 @@ int main(int argc, char* argv[])
     int device_fd = -1;
     char msg[UEVENT_MSG_LEN+2];
     int n;
+
+/* shenpengru: 20150303 add */
+#if 1
+    int opt;
+    int option_index = 0;
+    char *optstring = ":h:";
+    static struct option long_options[] = {
+        { "filter", required_argument, NULL, 'f'},
+        {   "help", no_argument,       NULL, 'h'},
+        {"version", no_argument,       NULL, 'v'},
+        {0, 0, 0, 0}
+    };
+
+    while( (opt = getopt_long(argc, argv, optstring, long_options, &option_index)) != -1 ){
+        switch( opt ){
+            case 'f':
+                //printf("The filter is %s\n", optarg);
+                strcpy(filter, optarg);
+                break;
+            case 'h':
+                help(HIDE_VERSION);
+                exit(0);
+                break;
+            case 'v':
+                help(SHOW_VERSION);
+                exit(0);
+            case '?':
+            default:
+                printf("\n\tERROR: Unknown options!\n");
+                exit(1);
+                break;
+        }
+    }
+#endif
+/* shenpengru: 20150303 add */
     
     device_fd = open_luther_gliethttp_socket();
     printf("device_fd = %d\n", device_fd);
