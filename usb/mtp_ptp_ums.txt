@@ -3,6 +3,7 @@ Reference:
 ++++++++++
 
 	http://blog.csdn.net/innost/article/details/8876392 (MTP In Android)
+	http://www.cnblogs.com/skywang12345/p/3474206.html
 
 ==============================================================================================================
 MTP/PTP 以及 UMS：
