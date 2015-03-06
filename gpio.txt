@@ -11,4 +11,8 @@ DWS gpio config file:
 vendor/mediatek/proprietary/custom/k6795v1_64/kernel/dct/dct/codegen.dws
 vendor/mediatek/proprietary/custom/k6795v1_64_op01_pre/kernel/dct/dct/codegen.dws
 
+/work/gerrit/mp_leui/kernel-3.10/drivers/misc/mediatek/mach/mt6795/x600/dct/dct/codegen.dws
+/work/gerrit/mp_leui/kernel-3.10/drivers/misc/mediatek/mach/mt6795/x601/dct/dct/codegen.dws
+/work/gerrit/mp_leui/kernel-3.10/drivers/misc/mediatek/mach/mt6795/x608/dct/dct/codegen.dws
+
 ==============================================================================================================
