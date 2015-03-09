@@ -1,17 +1,16 @@
 =======================================================================================================================
-/device/mediatek/build/build/tools/ptgen/MT6795/
+device/mediatek/build/build/tools/ptgen/MT6795/
 
 	partition_table_MT6795.xls
 	ptgen.mk
 
-/work/gerrit/mp_leui/device/cci/x600/
+device/cci/x600/BoardConfig.mk
 
-	partition_size.mk
 	这里会定义 system image 大小, 这个会影响最终分区大小.
 
 =======================================================================================================================
 
-/work/gerrit/mp_leui/out/target/product/x600/obj/PTGEN/partition_size.mk
+out/target/product/x600/obj/PTGEN/partition_size.mk
 
 	输出..
 
