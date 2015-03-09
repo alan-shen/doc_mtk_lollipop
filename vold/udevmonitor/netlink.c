@@ -47,9 +47,8 @@ struct luther_gliethttp {
     int minor;
 };
 
-static int open_luther_gliethttp_socket(void);
+static int  open_luther_gliethttp_socket(void);
 static void parse_event(const char *msg, struct luther_gliethttp *luther_gliethttp);
-
 static char filter[50]={"NO"};
 
 static int open_luther_gliethttp_socket(void)
