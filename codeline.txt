@@ -75,4 +75,8 @@ MP_LEUI:
 
 	repo init -u dianar:mtk_pre_cta/manifests.git -b letv_master -m letv/ALUCARD_S1_MP_LEUI.xml --repo-url=dianar:tools/repo.git
 
+MP_LEUI:
+
+	repo init -u dianar:mtk_pre_cta/manifests.git -b letv_master -m letv/ALUCARD_S1_PRE_CMCC_CTA.xml --repo-url=dianar:tools/repo.git
+
 =================================================================================================================================================================
