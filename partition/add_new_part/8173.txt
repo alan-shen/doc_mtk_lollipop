@@ -1,0 +1,123 @@
+==========================================================================================
+新增分区 backup:
+==========================================================================================
+------------------------------------------------------------------------------------
+build/core/main.mk
+
+ 903 .PHONY: droidcore
+ 904 droidcore: files \ 
+ 905     systemimage \
+ 906     $(INSTALLED_BOOTIMAGE_TARGET) \
+ 907     $(INSTALLED_RECOVERYIMAGE_TARGET) \
+ 908     $(INSTALLED_USERDATAIMAGE_TARGET) \ 
+ 909     $(INSTALLED_CACHEIMAGE_TARGET) \
+ 910     $(INSTALLED_VENDORIMAGE_TARGET) \ 
+ 911     $(INSTALLED_FILES_FILE) \
+ 912     $(INSTALLED_BACKUPIMAGE_TARGET)
+
+------------------------------------------------------------------------------------
+build/core/envsetup.mk
+
+371 TARGET_BACKUP_OUT := $(PRODUCT_OUT)/backup
+
+------------------------------------------------------------------------------------
+build/core/Makefile
+
+1707 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
+1708 INTERNAL_BACKUPIMAGE_FILES := \
+1709     $(filter $(TARGET_BACKUP_OUT)/%,$(ALL_DEFAULT_INSTALLED_MODULES))
+1710 
+1711 backupimage_intermediates := \
+1712     $(call intermediates-dir-for,PACKAGING,backup)
+1713 
+1714 BUILT_BACKUPIMAGE_TARGET := $(PRODUCT_OUT)/backup.img
+1715 
+1716 define build-backupimage-target
+1717   $(call pretty,"Target backup fs image: $(INSTALLED_BACKUPIMAGE_TARGET)")
+1718   @mkdir -p $(TARGET_BACKUP_OUT)
+1719   @mkdir -p $(backupimage_intermediates) && rm -rf $(backupimage_intermediates)/backup_image_info.txt
+1720   $(call generate-userimage-prop-dictionary, $(backupimage_intermediates)/backup_image_info.txt, skip_fsck=true)
+1721   @tree $(backupimage_intermediates)
+1722   @tree $(TARGET_BACKUP_OUT)
+1723   $(hide) PATH=$(foreach p,$(INTERNAL_USERIMAGES_BINARY_PATHS),$(p):)$$PATH \
+1724       ./build/tools/releasetools/build_image.py \
+1725       $(TARGET_BACKUP_OUT) $(backupimage_intermediates)/backup_image_info.txt $(INSTALLED_BACKUPIMAGE_TARGET)
+1726   $(hide) $(call assert-max-image-size,$(INSTALLED_BACKUPIMAGE_TARGET),$(BOARD_BACKUPIMAGE_PARTITION_SIZE))
+1727 endef
+1728 
+1729 INSTALLED_BACKUPIMAGE_TARGET := $(BUILT_BACKUPIMAGE_TARGET)
+1730 $(INSTALLED_BACKUPIMAGE_TARGET): $(INTERNAL_USERIMAGES_DEPS) $(INTERNAL_BACKUPIMAGE_FILES)
+1731     $(build-backupimage-target)
+1732 
+1733 .PHONY: backupimage-nodeps
+1734 backupimage-nodeps: | $(INTERNAL_USERIMAGES_DEPS)
+1735     $(build-backupimage-target)
+1736 
+1737 .PHONY: backupimage
+1738 backupimage: | $(INTERNAL_USERIMAGES_DEPS)
+1739     $(build-backupimage-target)
+1740 
+1741 endif
+
+------------------------------------------------------------------------------------
+build/tools/releasetools/build_image.py
+
+@@ -411,6 +411,10 @@ def ImagePropFromGlobalDict(glob_dict, mount_point):
+     copy_prop("fs_type", "fs_type")
+     copy_prop("custom_size", "partition_size")
+     copy_prop("custom_verity_block_device", "verity_block_device")
++  elif mount_point == "backup":
++    copy_prop("fs_type", "fs_type")
++    copy_prop("userdata_fs_type", "fs_type")
++    copy_prop("userdata_size", "partition_size")
+ 
+   if "fs_type" in d:
+     if d["fs_type"] == "ubifs":
+@@ -469,6 +473,8 @@ def main(argv):
+     mount_point = "oem"
+   elif image_filename == "custom.img":
+     mount_point = "custom"
++  elif image_filename == "backup.img":
++    mount_point = "backup"
+
+==========================================================================================
+device/mediatek/kungfupanda/custom/partition/partition.xml
+
+ 13     <entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="175360" end="191743" name="LOGO" />
+ 14     <entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="191744" end="1215743" name="backup" />
+ 15     <entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="1215744" end="1239039" name="expdb" />
+ 16     <entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="1239040" end="1249279" name="TEE1" />
+ 17     <entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="1249280" end="1259519" name="TEE2" />
+ 18     <entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="1259520" end="1261567" name="KB" />
+ 19     <entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="1261568" end="1263615" name="DKB" />
+ 20     <entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="1263616" end="4619059" name="system" />
+ 21     <entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="4619060" end="4881203" name="cache" />
+ 22     <entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="4881204" end="5438259" name="userdata" />
+
+------------------------------------------------------------------------------------
+device/mediatek/kungfupanda/BoardConfig.mk
+
+ 20 BOARD_BACKUPIMAGE_PARTITION_SIZE := $(call get-partition-size,backup)
+
+==========================================================================================
+------------------------------------------------------------------------------------
+device/mediatek/build/build/tools/partition/scatter.json
+
+126     "backup": {
+127         "file_name": "backup.img",
+128         "type": "EXT4_IMG"
+129     },
+
+==========================================================================================
+------------------------------------------------------------------------------------
+device/mediatek/common_mt8173/sepolicy/file_contexts
+
+@@ -401,3 +401,6 @@
+ 
+ # Wallpaper file for smartbook
+ /data/system/users/[0-9]+/smartbook_wallpaper  u:object_r:wallpaper_file:s0
++
++# backup partition
++/backup(/.*)?          u:object_r:cache_file:s0
+
+==========================================================================================

@@ -1,0 +1,137 @@
+From 605f62968cbc6c9df63af17efd940ad42b19201e Mon Sep 17 00:00:00 2001
+From: shenpengru <shenpengru@xiaomi.com>
+Date: Thu, 10 Sep 2015 16:51:10 +0800
+Subject: [PATCH] Add rule for build 'backupimage' which will flash to
+ partition '/backup'.
+
+KP-72
+
+The backup.img is depend on the otapackage.
+And had add this target to droidcore, so when you do a full build, the otapackage
+and backup.img will also be build out.
+You can generate backup.img use the command below:
+  make backupimage -jx
+  make -jx
+
+Change-Id: I4efb2ebc71cc1f266adac859f6acb74feed40b86
+Signed-off-by: shenpengru <shenpengru@xiaomi.com>
+---
+ core/Makefile                     |   31 +++++++++++++++++++++++++++++++
+ core/envsetup.mk                  |    2 ++
+ core/main.mk                      |    6 +++++-
+ tools/releasetools/build_image.py |    6 ++++++
+ 4 files changed, 44 insertions(+), 1 deletion(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index 747cf4b..108e621 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -753,6 +753,8 @@ $(if $(BOARD_USERDATAIMAGE_FILE_SYSTEM_TYPE),$(hide) echo "userdata_fs_type=$(BO
+ $(if $(BOARD_USERDATAIMAGE_PARTITION_SIZE),$(hide) echo "userdata_size=$(BOARD_USERDATAIMAGE_PARTITION_SIZE)" >> $(1))
+ $(if $(BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE),$(hide) echo "cache_fs_type=$(BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE)" >> $(1))
+ $(if $(BOARD_CACHEIMAGE_PARTITION_SIZE),$(hide) echo "cache_size=$(BOARD_CACHEIMAGE_PARTITION_SIZE)" >> $(1))
++$(if $(BOARD_BACKUPIMAGE_FILE_SYSTEM_TYPE),$(hide) echo "backup_fs_type=$(BOARD_BACKUPIMAGE_FILE_SYSTEM_TYPE)" >> $(1))
++$(if $(BOARD_BACKUPIMAGE_PARTITION_SIZE),$(hide) echo "backup_size=$(BOARD_BACKUPIMAGE_PARTITION_SIZE)" >> $(1))
+ $(if $(BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE),$(hide) echo "vendor_fs_type=$(BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE)" >> $(1))
+ $(if $(BOARD_VENDORIMAGE_PARTITION_SIZE),$(hide) echo "vendor_size=$(BOARD_VENDORIMAGE_PARTITION_SIZE)" >> $(1))
+ $(if $(BOARD_VENDORIMAGE_JOURNAL_SIZE),$(hide) echo "vendor_journal_size=$(BOARD_VENDORIMAGE_JOURNAL_SIZE)" >> $(1))
+@@ -1703,6 +1705,35 @@ $(INTERNAL_UPDATE_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) $(DISTTOOLS)
+ updatepackage: $(INTERNAL_UPDATE_PACKAGE_TARGET)
+ 
+ # -----------------------------------------------------------------
++# backup partition image
++ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
++INTERNAL_BACKUPIMAGE_FILES := \
++    $(filter $(TARGET_BACKUP_OUT)/%,$(ALL_DEFAULT_INSTALLED_MODULES))
++
++backupimage_intermediates := \
++    $(call intermediates-dir-for,PACKAGING,backup)
++
++BUILT_BACKUPIMAGE_TARGET := $(PRODUCT_OUT)/backup.img
++
++define build-backupimage-target
++  $(call pretty,"Target backup fs image: $(INSTALLED_BACKUPIMAGE_TARGET)")
++  @mkdir -p $(TARGET_BACKUP_OUT)
++  @mkdir -p $(backupimage_intermediates) && rm -rf $(backupimage_intermediates)/backup_image_info.txt
++  $(hide) $(ACP) $(INTERNAL_OTA_PACKAGE_TARGET) $(TARGET_BACKUP_OUT)/update-$(TARGET_PRODUCT).zip
++  $(call generate-userimage-prop-dictionary, $(backupimage_intermediates)/backup_image_info.txt, skip_fsck=true)
++  $(hide) PATH=$(foreach p,$(INTERNAL_USERIMAGES_BINARY_PATHS),$(p):)$$PATH \
++      ./build/tools/releasetools/build_image.py \
++      $(TARGET_BACKUP_OUT) $(backupimage_intermediates)/backup_image_info.txt $(INSTALLED_BACKUPIMAGE_TARGET)
++  $(hide) $(call assert-max-image-size,$(INSTALLED_BACKUPIMAGE_TARGET),$(BOARD_BACKUPIMAGE_PARTITION_SIZE))
++endef
++
++INSTALLED_BACKUPIMAGE_TARGET := $(BUILT_BACKUPIMAGE_TARGET)
++$(INSTALLED_BACKUPIMAGE_TARGET): $(INTERNAL_BACKUPIMAGE_FILES) $(INTERNAL_OTA_PACKAGE_TARGET) $(ACP)
++	$(build-backupimage-target)
++
++endif
++
++# -----------------------------------------------------------------
+ # A zip of the symbols directory.  Keep the full paths to make it
+ # more obvious where these files came from.
+ #
+diff --git a/core/envsetup.mk b/core/envsetup.mk
+index 6d93c4d..87b5eff 100644
+--- a/core/envsetup.mk
++++ b/core/envsetup.mk
+@@ -368,6 +368,8 @@ TARGET_ROOT_OUT_UNSTRIPPED := $(TARGET_OUT_UNSTRIPPED)
+ TARGET_ROOT_OUT_SBIN_UNSTRIPPED := $(TARGET_OUT_UNSTRIPPED)/sbin
+ TARGET_ROOT_OUT_BIN_UNSTRIPPED := $(TARGET_OUT_UNSTRIPPED)/bin
+ 
++TARGET_BACKUP_OUT := $(PRODUCT_OUT)/backup
++
+ TARGET_ROOT_OUT := $(PRODUCT_OUT)/$(TARGET_COPY_OUT_ROOT)
+ TARGET_ROOT_OUT_BIN := $(TARGET_ROOT_OUT)/bin
+ TARGET_ROOT_OUT_SBIN := $(TARGET_ROOT_OUT)/sbin
+diff --git a/core/main.mk b/core/main.mk
+index ac4e37d..88fde26 100644
+--- a/core/main.mk
++++ b/core/main.mk
+@@ -875,6 +875,9 @@ userdatatarball: $(INSTALLED_USERDATATARBALL_TARGET)
+ .PHONY: cacheimage
+ cacheimage: $(INSTALLED_CACHEIMAGE_TARGET)
+ 
++.PHONY: backupimage
++backupimage: $(INSTALLED_BACKUPIMAGE_TARGET)
++
+ .PHONY: vendorimage
+ vendorimage: $(INSTALLED_VENDORIMAGE_TARGET)
+ 
+@@ -908,7 +911,8 @@ droidcore: files \
+ 	$(INSTALLED_USERDATAIMAGE_TARGET) \
+ 	$(INSTALLED_CACHEIMAGE_TARGET) \
+ 	$(INSTALLED_VENDORIMAGE_TARGET) \
+-	$(INSTALLED_FILES_FILE)
++	$(INSTALLED_FILES_FILE) \
++	$(INSTALLED_BACKUPIMAGE_TARGET)
+ 
+ # dist_files only for putting your library into the dist directory with a full build.
+ .PHONY: dist_files
+diff --git a/tools/releasetools/build_image.py b/tools/releasetools/build_image.py
+index 4c2926f..48d6cf2 100755
+--- a/tools/releasetools/build_image.py
++++ b/tools/releasetools/build_image.py
+@@ -411,6 +411,10 @@ def ImagePropFromGlobalDict(glob_dict, mount_point):
+     copy_prop("fs_type", "fs_type")
+     copy_prop("custom_size", "partition_size")
+     copy_prop("custom_verity_block_device", "verity_block_device")
++  elif mount_point == "backup":
++    copy_prop("fs_type", "fs_type")
++    copy_prop("backup_fs_type", "fs_type")
++    copy_prop("backup_size", "partition_size")
+ 
+   if "fs_type" in d:
+     if d["fs_type"] == "ubifs":
+@@ -469,6 +473,8 @@ def main(argv):
+     mount_point = "oem"
+   elif image_filename == "custom.img":
+     mount_point = "custom"
++  elif image_filename == "backup.img":
++    mount_point = "backup"
+   else:
+     print >> sys.stderr, "error: unknown image file name ", image_filename
+     exit(1)
+-- 
+1.7.9.5
+

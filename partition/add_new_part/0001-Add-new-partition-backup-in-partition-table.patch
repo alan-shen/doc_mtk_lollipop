@@ -1,0 +1,60 @@
+From 2ce9dc280ab701dcef9d753a1e87bd482e4d1695 Mon Sep 17 00:00:00 2001
+From: shenpengru <shenpengru@xiaomi.com>
+Date: Thu, 10 Sep 2015 16:48:39 +0800
+Subject: [PATCH] Add new partition '/backup' in partition table.
+
+KP-72
+
+Partition '/backup' locate between '/logo' and 'extdb';
+and size is 500M Bytes.
+
+Change-Id: Ifc5ccc39094ef8cb5fcd11ccf862acb92a2113a4
+Signed-off-by: shenpengru <shenpengru@xiaomi.com>
+---
+ BoardConfig.mk                 |    2 ++
+ custom/partition/partition.xml |   17 +++++++++--------
+ 2 files changed, 11 insertions(+), 8 deletions(-)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index 63e07c5..074c62e 100755
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -17,7 +17,9 @@ BOARD_CACHEIMAGE_PARTITION_SIZE := $(call get-partition-size,cache)
+ #reserve 16384 for userdata encryption
+ BOARD_USERDATAIMAGE_PARTITION_SIZE := $(call get-partition-size,userdata,16384)
+ BOARD_FATIMAGE_PARTITION_SIZE := $(call get-partition-size,FAT)
++BOARD_BACKUPIMAGE_PARTITION_SIZE := $(call get-partition-size,backup)
+ BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
++BOARD_BACKUPIMAGE_FILE_SYSTEM_TYPE := ext4
+ BOARD_FLASH_BLOCK_SIZE := 4096
+ 
+ BOARD_USES_MTK_AUDIO := true
+diff --git a/custom/partition/partition.xml b/custom/partition/partition.xml
+index f8549d3..8678a2f 100755
+--- a/custom/partition/partition.xml
++++ b/custom/partition/partition.xml
+@@ -11,12 +11,13 @@
+ 	<entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="162048" end="174335" name="secro" />
+ 	<entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="174336" end="175359" name="MISC" />
+ 	<entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="175360" end="191743" name="LOGO" />
+-	<entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="191744" end="215039" name="expdb" />
+-	<entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="215040" end="225279" name="TEE1" />
+-	<entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="225280" end="235519" name="TEE2" />
+-	<entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="235520" end="237567" name="KB" />
+-	<entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="237568" end="239615" name="DKB" />
+-	<entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="239616" end="3595059" name="system" />
+-	<entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="3595060" end="3857203" name="cache" />
+-	<entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="3857204" end="5438259" name="userdata" />
++	<entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="191744" end="1215743" name="backup" />
++	<entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="1215744" end="1239039" name="expdb" />
++	<entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="1239040" end="1249279" name="TEE1" />
++	<entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="1249280" end="1259519" name="TEE2" />
++	<entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="1259520" end="1261567" name="KB" />
++	<entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="1261568" end="1263615" name="DKB" />
++	<entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="1263616" end="4619059" name="system" />
++	<entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="4619060" end="4881203" name="cache" />
++	<entry type="{0FC63DAF-8483-4772-8E79-3D69D8477DE4}" start="4881204" end="5438259" name="userdata" />
+ </partition>
+-- 
+1.7.9.5
+

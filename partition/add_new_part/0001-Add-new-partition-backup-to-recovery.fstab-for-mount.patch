@@ -1,0 +1,120 @@
+From b77258f6cdd5baef76ffd29642ba42871dc1e6d5 Mon Sep 17 00:00:00 2001
+From: shenpengru <shenpengru@xiaomi.com>
+Date: Thu, 10 Sep 2015 16:43:28 +0800
+Subject: [PATCH] Add new partition '/backup' to 'recovery.fstab' for mount
+ use.
+
+KP-72
+
+Change-Id: Idf4d60ce2514a68aa34317cfab52d128a2bc9e3d
+Signed-off-by: shenpengru <shenpengru@xiaomi.com>
+---
+ common.h    |    1 +
+ etc/init.rc |    1 +
+ roots.cpp   |   31 ++++++++++++++++++++++++++++++-
+ 3 files changed, 32 insertions(+), 1 deletion(-)
+
+diff --git a/common.h b/common.h
+index ecf44b5..967102b 100644
+--- a/common.h
++++ b/common.h
+@@ -89,6 +89,7 @@ bool is_support_gpt(void);
+ #define CUSTOM_PART    "/dev/block/platform/mtk-msdc.0/by-name/custom"
+ #define VENDOR_PART    "/dev/block/platform/mtk-msdc.0/by-name/vendor"
+ #define LOGO_PART      "/dev/block/platform/mtk-msdc.0/by-name/LOGO"
++#define BACKUP_PART    "/dev/block/platform/mtk-msdc.0/by-name/backup"
+ #define LK_PART        "/dev/block/platform/mtk-msdc.0/by-name/lk"
+ #define TEE1_PART      "/dev/block/platform/mtk-msdc.0/by-name/TEE1"
+ #define TEE2_PART      "/dev/block/platform/mtk-msdc.0/by-name/TEE2"
+diff --git a/etc/init.rc b/etc/init.rc
+index aa057e6..019f40b 100644
+--- a/etc/init.rc
++++ b/etc/init.rc
+@@ -23,6 +23,7 @@ on init
+     mkdir /system
+     mkdir /data
+     mkdir /cache
++    mkdir /backup 0775 system cache
+     insmod /sec.ko
+     mknod /dev/sec c 182 0
+     chmod 0660 /dev/sec
+diff --git a/roots.cpp b/roots.cpp
+index 4d85000..683250c 100644
+--- a/roots.cpp
++++ b/roots.cpp
+@@ -207,6 +207,7 @@ void load_volume_table() {
+     int has_persist = 0;
+     int has_nvdata = 0;
+     int has_udisk = 0;
++    int has_backup = 0;
+ 	
+     bool is_gpt = is_support_gpt();
+ 
+@@ -225,7 +226,9 @@ void load_volume_table() {
+                         } else if (!strcmp(p_name, "persist")) {
+                             has_persist = 1;
+                         } else if (!strcmp(p_name, "nvdata")) {
+-                            has_nvdata = 1;     
++                            has_nvdata = 1;
++                        } else if (!strcmp(p_name, "backup")) {
++                            has_backup = 1;
+                         } else if (!strcmp(p_name, "custom")) {
+                             has_custom = 1;
+                         } // end of has_custom
+@@ -269,6 +272,11 @@ void load_volume_table() {
+                 device_volumes = (Volume*)realloc(device_volumes, num_volumes * sizeof(Volume));
+             }
+ 
++            if (has_backup) {
++                num_volumes ++;
++                device_volumes = (Volume*)realloc(device_volumes, num_volumes * sizeof(Volume));
++            }
++
+             //boot
+             device_volumes[1].mount_point = strdup("/boot");
+             device_volumes[1].fs_type = strdup("emmc");
+@@ -399,6 +407,13 @@ void load_volume_table() {
+ #endif //SUPPORT_SDCARD2
+ 
+             if(has_persist && has_nvdata) {
++                if(has_backup) {
++                    device_volumes[num_volumes - 4].mount_point = strdup("/backup");
++                    device_volumes[num_volumes - 4].fs_type = strdup("ext4");
++                    device_volumes[num_volumes - 4].device = strdup(BACKUP_PART);
++                    device_volumes[num_volumes - 4].device2 = NULL;
++                    device_volumes[num_volumes - 4].length = 0;
++                }
+                 if(has_udisk) {
+                     device_volumes[num_volumes - 3].mount_point = strdup("/udisk");
+                     device_volumes[num_volumes - 3].fs_type = strdup("vfat");
+@@ -422,6 +437,13 @@ void load_volume_table() {
+             } else {
+                 if(has_udisk) {
+                     if(has_persist || has_nvdata){
++                        if(has_backup) {
++                            device_volumes[num_volumes - 3].mount_point = strdup("/backup");
++                            device_volumes[num_volumes - 3].fs_type = strdup("ext4");
++                            device_volumes[num_volumes - 3].device = strdup(BACKUP_PART);
++                            device_volumes[num_volumes - 3].device2 = NULL;
++                            device_volumes[num_volumes - 3].length = 0;
++                        }
+                         device_volumes[num_volumes - 2].mount_point = strdup("/udisk");
+                         device_volumes[num_volumes - 2].fs_type = strdup("vfat");
+                         device_volumes[num_volumes - 2].device = strdup("/dev/block/sda#");
+@@ -429,6 +451,13 @@ void load_volume_table() {
+                         device_volumes[num_volumes - 2].length = 0;
+                     }
+                     else{
++                        if(has_backup) {
++                            device_volumes[num_volumes - 2].mount_point = strdup("/backup");
++                            device_volumes[num_volumes - 2].fs_type = strdup("ext4");
++                            device_volumes[num_volumes - 2].device = strdup(BACKUP_PART);
++                            device_volumes[num_volumes - 2].device2 = NULL;
++                            device_volumes[num_volumes - 2].length = 0;
++                        }
+                         device_volumes[num_volumes - 1].mount_point = strdup("/udisk");
+                         device_volumes[num_volumes - 1].fs_type = strdup("vfat");
+                         device_volumes[num_volumes - 1].device = strdup("/dev/block/sda#");
+-- 
+1.7.9.5
+

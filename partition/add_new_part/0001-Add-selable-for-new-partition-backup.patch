@@ -1,0 +1,28 @@
+From 68f38f05ac8af99854c9bd46b56a4000129faff8 Mon Sep 17 00:00:00 2001
+From: shenpengru <shenpengru@xiaomi.com>
+Date: Thu, 10 Sep 2015 16:44:30 +0800
+Subject: [PATCH] Add selable for new partition '/backup'.
+
+KP-72
+
+Change-Id: Ib7e33e14aba1e4b2066b44b8ef9adddcce0274fe
+Signed-off-by: shenpengru <shenpengru@xiaomi.com>
+---
+ sepolicy/file_contexts |    4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/sepolicy/file_contexts b/sepolicy/file_contexts
+index 9789459..a82a165 100755
+--- a/sepolicy/file_contexts
++++ b/sepolicy/file_contexts
+@@ -401,3 +401,7 @@
+ 
+ # Wallpaper file for smartbook
+ /data/system/users/[0-9]+/smartbook_wallpaper	u:object_r:wallpaper_file:s0
++
++# backup partition
++/backup                u:object_r:cache_file:s0
++/backup(/.*)?          u:object_r:cache_file:s0
+-- 
+1.7.9.5
+

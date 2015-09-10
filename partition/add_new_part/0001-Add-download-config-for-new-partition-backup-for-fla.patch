@@ -1,0 +1,32 @@
+From 965f905287bbdfbddf1b479ede14adc3e07432f9 Mon Sep 17 00:00:00 2001
+From: shenpengru <shenpengru@xiaomi.com>
+Date: Thu, 10 Sep 2015 16:45:11 +0800
+Subject: [PATCH] Add download config for new partition '/backup' for
+ flashtool.
+
+KP-72
+
+Change-Id: I7205824d57eea4b4b83e484d9a3f7057a66890da
+Signed-off-by: shenpengru <shenpengru@xiaomi.com>
+---
+ build/tools/partition/scatter.json |    4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/build/tools/partition/scatter.json b/build/tools/partition/scatter.json
+index 09d8daa..1c25806 100644
+--- a/build/tools/partition/scatter.json
++++ b/build/tools/partition/scatter.json
+@@ -123,6 +123,10 @@
+         "file_name": "logo.bin", 
+         "type": "NORMAL_ROM"
+     }, 
++    "backup": {
++        "file_name": "backup.img",
++        "type": "EXT4_IMG"
++    },
+     "expdb": {
+         "operation_type": "INVISIBLE",
+         "type": "NORMAL_ROM"
+-- 
+1.7.9.5
+
