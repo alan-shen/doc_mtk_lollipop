@@ -1,0 +1,14 @@
+diff --git a/core/Makefile b/core/Makefile
+index 108e621..5fb2598 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -1636,6 +1636,9 @@ ifneq ($(TARGET_USERIMAGES_USE_UBIFS),true)
+ 	     --tee $(PRODUCT_OUT)/tz.img \
+ 	     $(if $(OEM_OTA_CONFIG), -o $(OEM_OTA_CONFIG)) \
+ 	     $(BUILT_TARGET_FILES_PACKAGE) $@
++      ifeq ($(INTERNAL_OTA_PACKAGE_TARGET), $(wildcard $(INTERNAL_OTA_PACKAGE_TARGET)))
++         $(build-backupimage-target)
++      endif
+   else
+   ifeq (yes, $(filter $(TRUSTONIC_TEE_SUPPORT) $(MTK_ATF_SUPPORT),yes))
+ 	  $(hide) MTK_SECURITY_SW_SUPPORT=$(MTK_SECURITY_SW_SUPPORT) MKBOOTIMG=$(MKBOOTIMG) \
