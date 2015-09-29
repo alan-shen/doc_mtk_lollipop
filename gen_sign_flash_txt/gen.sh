@@ -6,7 +6,7 @@ OUTPUT=""
 if [ -z $1 ];then
 	echo -e "error: need input a file which will be transfored.\n"
 	echo -e "eg."
-	echo -e "	./gen.sh MT8173_Android_scatter_emmc.txt\n"
+	echo -e "	$0 MT8173_Android_scatter_emmc.txt\n"
 	exit 1
 else
 	if [ -e /tmp/tmp.txt ];then
