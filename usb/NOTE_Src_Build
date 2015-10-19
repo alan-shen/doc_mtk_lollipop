@@ -1,0 +1,114 @@
+shenpengru@spacex:/work/kungfupanda/out/target/product/kungfupanda/obj/KERNEL_OBJ/drivers/misc/mediatek$ tree ssusb/
+ssusb/
+├── built-in.o
+├── modules.builtin
+├── modules.order
+├── mu3d
+│   ├── built-in.o
+│   ├── modules.builtin
+│   ├── modules.order
+│   ├── mt_usb.o
+│   ├── mu3d_hal_qmu_drv.o
+│   ├── mu3d_hal_usb_drv.o
+│   ├── musb_core.o
+│   ├── musb_gadget_ep0.o
+│   ├── musb_gadget.o
+│   ├── musb_hdrc.o
+│   ├── musb_init.o
+│   ├── ssusb_sysfs.o
+│   └── xhci-mtk.o
+└── mu3phy
+    ├── built-in.o
+    ├── modules.builtin
+    ├── modules.order
+    └── mt8173
+        ├── built-in.o
+        ├── modules.builtin
+        ├── modules.order
+        ├── mtk-phy-ahb.o
+        ├── mtk-phy-asic.o
+        ├── mtk-phy.o
+        └── mu3phy.o
+
+
+shenpengru@spacex:/work/kungfupanda/out/target/product/kungfupanda/obj/KERNEL_OBJ/drivers/usb$ tree
+.
+├── built-in.o
+├── core
+│   ├── buffer.o
+│   ├── built-in.o
+│   ├── config.o
+│   ├── devices.o
+│   ├── devio.o
+│   ├── driver.o
+│   ├── endpoint.o
+│   ├── file.o
+│   ├── generic.o
+│   ├── hcd.o
+│   ├── hub.o
+│   ├── message.o
+│   ├── modules.builtin
+│   ├── modules.order
+│   ├── notify.o
+│   ├── port.o
+│   ├── quirks.o
+│   ├── sysfs.o
+│   ├── urb.o
+│   ├── usbcore.o
+│   └── usb.o
+├── gadget
+│   ├── android.o
+│   ├── built-in.o
+│   ├── composite.o
+│   ├── configfs.o
+│   ├── config.o
+│   ├── epautoconf.o
+│   ├── f_acm.o
+│   ├── functions.o
+│   ├── g_android.o
+│   ├── libcomposite.o
+│   ├── modules.builtin
+│   ├── modules.order
+│   ├── udc-core.o
+│   ├── usb_f_acm.o
+│   ├── usbstring.o
+│   └── u_serial.o
+├── host
+│   ├── built-in.o
+│   ├── modules.builtin
+│   ├── modules.order
+│   ├── xhci-dbg.o
+│   ├── xhci-hcd.o
+│   ├── xhci-hub.o
+│   ├── xhci-mem.o
+│   ├── xhci-mtk.o
+│   ├── xhci-mtk-test.o
+│   ├── xhci.o
+│   ├── xhci-plat.o
+│   └── xhci-ring.o
+├── misc
+│   ├── built-in.o
+│   ├── modules.builtin
+│   └── modules.order
+├── modules.builtin
+├── modules.order
+├── phy
+│   ├── built-in.o
+│   ├── modules.builtin
+│   ├── modules.order
+│   ├── phy-nop.o
+│   └── phy.o
+├── storage
+│   ├── built-in.o
+│   ├── initializers.o
+│   ├── modules.builtin
+│   ├── modules.order
+│   ├── option_ms.o
+│   ├── protocol.o
+│   ├── scsiglue.o
+│   ├── sierra_ms.o
+│   ├── transport.o
+│   ├── usb.o
+│   ├── usb-storage.o
+│   └── usual-tables.o
+└── usb-common.o
